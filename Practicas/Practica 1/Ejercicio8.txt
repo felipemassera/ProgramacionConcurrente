@@ -1,0 +1,6 @@
+8.	Desarrolle una solución de grano fino usando sólo variables compartidas (no se puede usar las sentencias await
+ ni funciones especiales como TS o FA). En base a lo visto en la clase 2 de teoría, resuelva el problema de acceso a
+ sección crítica usando un proceso coordinador. En este caso, cuando un proceso SC[i] quiere entrar a su sección crítica
+ le avisa al coordinador, y espera a que éste le dé permiso. Al terminar de ejecutar su sección crítica, 
+ el proceso SC[i] le avisa al coordinador. Nota: puede basarse en la solución para implementar barreras con Flags y Coordinador
+ vista en la teoría 3. 
