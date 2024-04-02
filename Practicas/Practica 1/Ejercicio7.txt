@@ -1,5 +1,6 @@
 7.	Dada la siguiente solución para el Problema de la Sección Crítica entre dos procesos (suponiendo que tanto SC
-    como SNC son segmentos de código finitos, es decir que terminan en algún momento),indicar si cumple con las 4 condiciones requeridas: 
+    como SNC son segmentos de código finitos, es decir que terminan en algún momento),
+    indicar si cumple con las 4 condiciones requeridas: 
 
 int turno = 1;
 
@@ -22,3 +23,20 @@ Process SC2:: {
         SNC;
     }
 }
+
+//el programa nunca terminaria ya que se quedaria colgado entre el while de turno ==1 y el while de turno ==2. 
+Esto genera problemas en las propiedades. 
+1-  Exclusión mutua: A lo sumo un proceso está en su SC
+2-  Ausencia de Deadlock (Livelock): si 2 o más procesos tratan de
+    entrar a sus SC, al menos uno tendrá éxito.
+3-  Ausencia de Demora Innecesaria: si un proceso trata de entrar a su
+    SC y los otros están en sus SNC o terminaron, el primero no está impedido de entrar a su SC.
+4-  Eventual Entrada: un proceso que intenta entra a su SC tiene
+    posibilidades de hacerlo (eventualmente lo hará).
+
+ANALISIS:
+1- en este caso el sistema no realiza Exclusión mutua para ingresar a la SC pero sin embargo, no hay forma de que ambos procesos esten
+en el mismo momento en la SC, ya que un proceso estara loopeando mientras el otro esta en SC.
+2- Ausencia de deadlock, esta se da ya que no comparten recursos que necesita el otro.
+3- tiene Ausenciade demora necesaria, ya que no bloquea el recursos
+4- cumple con la eventual entrada.
