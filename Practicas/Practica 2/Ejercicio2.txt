@@ -1,0 +1,40 @@
+2.Un sistema de control cuenta con 4 procesos que realizan chequeos en forma colaborativa.
+ Para ello, reciben el historial de fallos del día anterior (por simplicidad, de tamaño N).
+ De cada fallo, se conoce su número de identificación (ID) y su nivel de gravedad (0=bajo,
+ 1=intermedio, 2=alto, 3=crítico). Resuelva considerando las siguientes situaciones:
+
+a) Se debe imprimir en pantalla los ID de todos los errores críticos (no importa el orden).
+    
+    sem informe=1; int cantInformes = 0 ; int colaInforme[0..N]= informes;
+
+    process chequeo [id: 0..3]::
+    {   
+        while (cantInformes < n) {
+            p(informe);                         //pido usar el informe
+            error = colaInforme.pop();
+            cantInformes= cantInformes+1;
+            v(informe);
+            if (error==3) imprimir;
+        }
+    }
+
+
+b)Se debe calcular la cantidad de fallos por nivel de gravedad, debiendo quedar los resultados en un vector global.
+    
+    sem informe=1; int cantInformes = 0 ; int colaInforme[0..N]= informes; 
+    int vectorContador [0..3] = (0..3 =0);
+   
+    process chequeo [id: 0..3]::
+    {   
+        while (cantInformes < n) {
+            p(informe);                         //pido usar el informe
+            error = colaInforme.pop();
+            cantInformes= cantInformes+1;
+            vectorContador[error] = vectorContador[error] + 1;
+            v(informe);
+        }
+    }
+
+c) Ídem "b)" pero cada proceso debe ocuparse de contar los fallos de un nivel de gravedad determinado.
+
+    PREGUNTAR MAÑANA EN CONSULTA.
