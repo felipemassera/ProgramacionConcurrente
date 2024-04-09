@@ -3,7 +3,7 @@ En un examen final hay P alumnos y 3 profesores. Cuando todos los alumnos han ll
 Cada alumno resuelve su examen, lo entrega y espera a que alguno de los profesores lo corrija y le indique la nota.
  Los profesores corrigen los exámenes respectando el orden en que los alumnos van entregando. 
 
- int colaEntrega [1..p] int notas[1..p] int total=0
+ cola colaEntrega [1..p] int notas[1..p] = ([P] 0) int total=0
 
 process alumno[id:1..P]{
     <total= total + 1>              //avisar que llegue
@@ -14,16 +14,10 @@ process alumno[id:1..P]{
     <total = total -1>              //salir
 }
 
-process profesores [id: 1..3]{
-    if (id ==1 ) {                  //inicializo vector. CONSULTAR COMO INICIALIZARLO en la practica.
-        for i= 1..p{
-            colaEntrega[i]=0;
-            notas[i]=0;
-        }
-    }   
+process profesores [id: 1..3]{   
     <await (total==P)>              //esperar que lleguen todos los alumnos
 
-    <while (total<>0)> {            //mientras hay alumnos que no entregaron sus examnes.. SE PUEDE EVALUAR LA COND BOOLEANA DE FORMA ATOMICA PERO NO EL WHILE EN SI>?
+    while (total<>0)> {            //mientras hay alumnos que no entregaron sus examnes.. SE PUEDE EVALUAR LA COND BOOLEANA DE FORMA ATOMICA PERO NO EL WHILE EN SI>?
         <await not(Empty(colaEntrega)); siguiente=Sacar(colaEntrega)> // si la cola tiene un examen, lo saco. sino espero.
         nota=Random(1,10);          //corrijo nota .... para invento que la nota sera un numero random entre 1 y 10 
         notas[siguiente]=nota       //entego nota                                       

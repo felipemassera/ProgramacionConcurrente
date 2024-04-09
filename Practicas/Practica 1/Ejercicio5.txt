@@ -49,22 +49,11 @@ opcion A
                    colaOrdenada.insertar(id)}>
             <await (siguiente==id);> 
             imprimir(documento);    	                //envio el documento a ser impreso
-            <if (colaOrdenada.empy()){
+            if (colaOrdenada.empy()){
                 siguiente =-1;
             }else{
                 siguiente = colaOrdenada.pop();
             }
-        }
-
-////////////////////////////////////////////////////////////////////////////////////////
-opcion B
-        process persona[id:0..n-1]{
-            Documento documento
-            <cola.insertar(id)>
-            <siguiente=cola.sacar()>
-            <await (siguiente==id);>
-            impresora.imprimir
-            
         }
 
 

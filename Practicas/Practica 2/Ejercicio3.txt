@@ -5,41 +5,6 @@ ser encolada nuevamente.
 
 NOTA: RECORDAR QUE SOLO PUEDE ENCOLAR Y DESENCOLAR DE A 1 PROCESO A LA VEZ!!!
 
-<<< OPCION A >>> instintivamente me salio esto, pero no aprovecha concurrencia
-sem mutex=1; ColacolaRecursos [0..4]=(0..4 =recurso);
-int cantRecLibres=5; Recurso recurso;
-
-Process Proceso [id:1..P]::
-{
-    P(mutex);                               //pido ver variables
-    if(cantRecLibres>0) {                   //chequeo que haya un recurso disponible
-        recurso = colaRecursos.pop();       //saco el recurso y resto 1 en rec disponible;
-        cantRecLibres= cantRecLibres - 1;
-        **Uso Recurso**
-        colaRecursos.push(recurso);        //libero el recurso + sumo 1 en rec disponibles
-        cantRecLibres= cantRecLibres + 1;
-    }
-    V(mutex)                                //devuelvo variables; 
-}
-DUDA>>> PUEDO MEJORAR LA CONCURRENCIA?  HAY FORMA DE HACERLO SIN BLOQUEAR TANTO EL RECURSO? 
-
-<<< OPCION B >>> 2do intento! NO ME GUSTA EL IFFFF
-
-sem mutex=1; Cola colaRecursos[0..4]=(0..4 = recurso); Recurso recurso;
-
-Process Proceso [id:1..P]::
-{
-    P(mutex);                               //pido ver variables
-    if( colaRecursos.size()>0 ) {           //chequeo que haya un recurso disponible
-        recurso =colaRecursos.pop();        //saco el recurso
-        V(mutex);                           //AGREGO ESTA LINEA libero el uso de variables
-        **Uso Recurso**
-        p(mutex)                            //AGREGO ESTA LINEA pido el uso de variables
-        colaRecursos.push(recurso);         //libero el recurso, lo pongo en la cola de recursos libres
-    }
-    V(mutex)                                //devuelvo variables; 
-}
-
 <<< OPCION C >>> Usando un semaforo de espera. SERA que esta bien??
 sem mutex = 1, espera = 5
 cola colaRecursos[5]; Recurso recurso;

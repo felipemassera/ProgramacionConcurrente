@@ -35,8 +35,8 @@ Esto genera problemas en las propiedades.
     posibilidades de hacerlo (eventualmente lo hará).
 
 ANALISIS:
-1- en este caso el sistema no realiza Exclusión mutua para ingresar a la SC pero sin embargo, no hay forma de que ambos procesos esten
-en el mismo momento en la SC, ya que un proceso estara loopeando mientras el otro esta en SC.
-2- Ausencia de deadlock, esta se da ya que no comparten recursos que necesita el otro.
-3- tiene Ausenciade demora necesaria, ya que no bloquea el recursos
-4- cumple con la eventual entrada.
+1- Verdadero, los procesos van a ir intercambiado en el acceso a la SC.
+2- Ausencia de deadlock, se cumple.
+3- Ausenciade demora innecesaria, esto no se da ya que si un proceso esta en la snc, el otro proceso puede
+ estar esperando a entrar a la sc y que no se pueda ya que cambio el turno. 
+4- cumple con la eventual entrada. es correcto. ambos procesos se aseguran que van a entrar en algun momento.

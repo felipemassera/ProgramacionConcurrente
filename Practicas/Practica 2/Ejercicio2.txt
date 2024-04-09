@@ -9,32 +9,53 @@ a) Se debe imprimir en pantalla los ID de todos los errores críticos (no import
 
     process chequeo [id: 0..3]::
     {   
-        while (cantInformes < n) {
-            p(informe);                         //pido usar el informe
+        p(informe);                         //pido usar el informe
+        while (!empty(colaInforme)) {
             error = colaInforme.pop();
-            cantInformes= cantInformes+1;
             v(informe);
             if (error==3) imprimir;
+            p(informe);
         }
+        v(informe);
     }
 
 
 b)Se debe calcular la cantidad de fallos por nivel de gravedad, debiendo quedar los resultados en un vector global.
     
     sem informe=1; int cantInformes = 0 ; int colaInforme[0..N]= informes; 
-    int vectorContador [0..3] = (0..3 =0);
+    int[] vectorContador = ([4] 0);
+    sem[] vectorSem = ([4] 1);
    
     process chequeo [id: 0..3]::
     {   
-        while (cantInformes < n) {
-            p(informe);                         //pido usar el informe
+        p(informe);                         //pido usar el informe
+        while (!empty(colaInforme)) {
             error = colaInforme.pop();
-            cantInformes= cantInformes+1;
-            vectorContador[error] = vectorContador[error] + 1;
             v(informe);
+            P(vectorSem[error])
+            vectorContador[error] = vectorContador[error] + 1;
+            V(vectorSem[error])
+            p(informe);
         }
+        v(informe);
     }
 
 c) Ídem "b)" pero cada proceso debe ocuparse de contar los fallos de un nivel de gravedad determinado.
 
-    PREGUNTAR MAÑANA EN CONSULTA.
+   sem informe=1; int cantInformes = 0 ; int colaInforme[0..N]= informes; 
+    int[] vectorContador = ([4] 0);
+    sem[] vectorSem = ([4] 1);
+   
+    process chequeo [id: 0..3]::
+    {
+        cola_local = colaInforme.clone()   
+        p(informe);                         //pido usar el informe
+        while (!empty(cola_local)) {
+            error = cola_local.pop();
+            v(informe);
+            if (error = id)
+                vectorContador[id] = vectorContador[id] + 1;
+            p(informe);
+        }
+        v(informe);
+    }
