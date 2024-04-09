@@ -22,3 +22,16 @@ RESPUESTA:
 No, no es la mas adecuada. P(alta) y P(baja) deberian ir antes de P(sem),
 ya que evita demora innecesaria al preguntar si hay primero espacio para gente de
 alta/baja antes de reservar el espacio para entrar.
+SIEMPRE SE BLOQUEA DE LO PARTICULAR A LO GENERAL. 
+ya que sino puede bloquerse algo general (cerrando el cupo) que nunca suceda en el bloqueo inferior.
+ej: en el proceso Usuario-alta, pasa un usuario de prioridad baja, accede al p(sem),
+por ser menor a 6 usuarios en simultaneo. Pero nunca pasa p(alta), bloqueando el sistema. 
+
+CORRECTO CODIGO
+Process Usuario-Alta [I:1..L]::        ||         Process Usuario-Baja [I:1..K]::
+{   P (alta);                          ||         {   P (baja);
+    P (sem);                           ||             P (sem);
+    //usa la BD                        ||             //usa la BD
+    V(sem);                            ||             V(sem);
+    V(alta);                           ||             V(baja);
+}                                      ||         }

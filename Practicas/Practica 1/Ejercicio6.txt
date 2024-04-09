@@ -1,26 +1,33 @@
 6.	Resolver con SENTENCIAS AWAIT (<> y/o <await B; S>) el siguiente problema. 
-En un examen final hay P alumnos y 3 profesores. Cuando todos los alumnos han llegado comienza el examen. 
-Cada alumno resuelve su examen, lo entrega y espera a que alguno de los profesores lo corrija y le indique la nota.
- Los profesores corrigen los exámenes respectando el orden en que los alumnos van entregando. 
+En un examen final hay P alumnos y 3 profesores. Cuando todos los alumnos han
+llegado comienza el examen. 
+Cada alumno resuelve su examen, lo entrega y espera a que alguno de los profesores
+ lo corrija y le indique la nota. Los profesores corrigen los exámenes respectando
+  el orden en que los alumnos van entregando. 
 
- cola colaEntrega [1..p] int notas[1..p] = ([P] 0) int total=0
+
+ cola colaEntrega [1..p];
+ int[] notas = ([P] 0) 
+ int corregidos = 0; totalAlumnos=0; 
 
 process alumno[id:1..P]{
-    <total= total + 1>              //avisar que llegue
-    <await (total==P);>             //esperar a que llegue el resto
-    *hacer examen                   // Hacer examen    
-    Agregar(colaEntrega,id);        //entregar examen se realizara de forma atomica CONSULTAR EN PRACTICA***
-    <await (notas[id]<>0)>         //esperar nota
-    <total = total -1>              //salir
+    <totalAlumnos= totalAlumnos + 1>    //avisar que llegue
+    <await (total==P);>                 //esperar a que llegue el resto
+    ***HAGO EXAMEN***                   // Hacer examen    
+    colaEntrega.push(id);               //entrego el examen
+    <await (notas[id]<>0)>              //esperar nota
+    ***SE RETIRA***
 }
 
-process profesores [id: 1..3]{   
-    <await (total==P)>              //esperar que lleguen todos los alumnos
+process profesores [id: 1..3]{
+    int idAlumno =-1; nota =0;
 
-    while (total<>0)> {            //mientras hay alumnos que no entregaron sus examnes.. SE PUEDE EVALUAR LA COND BOOLEANA DE FORMA ATOMICA PERO NO EL WHILE EN SI>?
-        <await not(Empty(colaEntrega)); siguiente=Sacar(colaEntrega)> // si la cola tiene un examen, lo saco. sino espero.
-        nota=Random(1,10);          //corrijo nota .... para invento que la nota sera un numero random entre 1 y 10 
-        notas[siguiente]=nota       //entego nota                                       
+    <await (total==P)>              //esperar que lleguen todos los alumnos
+    while (corregido<P)> {          //mientras que la cantidad de examenes sea < a la cant de alumnos itera.
+       <await (!colaEntrega.empy());idAlumno=colaEntrega.pop()> // si la cola tiene un examen, lo saco. sino espero.
+       ***SE CORRIGE EL EXAMEN***
+       <corregidos ++>
+       notas[idAlumno] = nota       //entego nota                                       
     }
-    //fin examen general es cuando el total =0 para salir While
+    //fin examen general es cuando el total=P para salir While
 }

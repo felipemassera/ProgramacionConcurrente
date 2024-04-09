@@ -2,16 +2,14 @@
  Un sistema operativo mantiene 5 instancias de un recurso almacenadas en una cola, cuando un proceso necesita usar
   una instancia del recurso la saca de la cola, la usa y cuando termina de usarla la vuelve a depositar. 
 
- colaRecurso [5] ; int cantRecursoUsados =0;
+Cola colaRecurso; 
 
 process ejercicio4[id: 0..N-1]{         //no se saben cuantos procesos se generan para realizar la tarea por eso 0..N-1
     Recurso recurso;                    // declaro una variable del tipo Recurso.
     while (true){
-        <await(cantRecursoUsados<5);    // Si la cantidad de recursos utilizadon son menor a 5 entonces..
-        cantRecursoUsados ++;           //agrego uno a la can
+        <await(!colaRecurso.empy());    // Si la cantidad de recursos utilizadon son menor a 5 entonces..
         recurso = colaRecurso.pop();>   //Saco el recurso a utilizar
         **Uso el recurso**
-        <colaRecurso.push(recurso);     //Luego de usarlo lo pongo de vuelta en la cola 
-        cantRecursoUsados --;>          
+        <colaRecurso.push(recurso);>     //Luego de usarlo lo pongo de vuelta en la cola    
     }
 }

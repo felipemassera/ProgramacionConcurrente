@@ -20,11 +20,12 @@ Process Consumidor:: {
     }
 }
 
-a. Indicar si el siguiente código funciona para resolver el problema de Productor/Consumidor con un buffer de tamaño N.
- En caso de no funcionar, debe hacer las modificaciones necesarias.
+a. Indicar si el siguiente código funciona para resolver el problema de Productor/Consumidor con un buffer
+ de tamaño N. En caso de no funcionar, debe hacer las modificaciones necesarias.
 
-*** El programa no funciona correctamente dado que la escritura y utilizacion de la variable BUFFER es utilizada de manera no atomica
-lo que puede originar problemas en cuanto a la fidelidad de los resultados. solucion, que sea atomica <>.
+*** El programa no funciona correctamente dado que la escritura y utilizacion de la variable BUFFER
+ es utilizada de manera no atomica lo que puede originar problemas en cuanto a la fidelidad de los
+ resultados. solucion, que sea atomica <>.
 
 int cant = 0; int pri_ocupada = 0; int pri_vacia = 0; int buffer[N]
 
@@ -49,8 +50,8 @@ Process Consumidor:: {
 
 b. Modificar el código para que funcione para C consumidores y P productores.
 
-** EN este caso seria la logica similar a la anterior, salvo que la var pri_ocupada // pri_vacia a su vez tambien sera utilizada
- por procesos para C consumidores y P productores.
+** EN este caso seria la logica similar a la anterior, salvo que la var pri_ocupada//pri_vacia
+ a su vez tambien sera utilizada por procesos para C consumidores y P productores.
  
 int cant = 0; int pri_ocupada = 0; int pri_vacia = 0; int buffer[N]
 

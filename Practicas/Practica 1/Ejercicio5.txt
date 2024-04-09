@@ -3,11 +3,12 @@
     
     Existen N personas que deben imprimir un trabajo cada una. 
     
-    a).	Implemente una solución suponiendo que existe una única impresora compartida por todas las personas, y las mismas la deben
-        usar de a una persona a la vez, sin importar el orden. Existe una función Imprimir(documento) llamada por la persona que simula
-        el uso de la impresora. Sólo se deben usar los procesos que representan a las Personas. 
+    a).	Implemente una solución suponiendo que existe una única impresora compartida por todas las personas,
+         y las mismas la deben usar de a una persona a la vez, sin importar el orden. Existe una función
+         Imprimir(documento) llamada por la persona que simula el uso de la impresora.
+          Sólo se deben usar los procesos que representan a las Personas. 
      
-     opcion A   
+     opcion A
         bool impresoraLibre = true; 
         
         process persona[id : 0..n-1]{
@@ -23,10 +24,10 @@
             Documento documento;            //crear documento
             <imprimir(documento);>            //envio el documento a ser impreso
         }
-
+        
     b)	Modifique la solución de (a) para el caso en que se deba respetar el orden de llegada.
         
-        turno[0..N] =([n] =0);              ///////////CONSULTARR asi se instancia un array inicializado ?
+        int[] turno =([n] =0);              ///////////CONSULTARR asi se instancia un array inicializado ?
         int numero= 0; int proximo=0;
 
         process persona[id : 0..n-1]{
@@ -34,8 +35,8 @@
             <turno[numero]=id ;  numero ++>             // reservo el turno por orden de llegada con id, aumento el numero para el proximo en el vector
             <await (turno[proximo] == id);>             //espero a que sea el turno 
             imprimir(documento);                        //envio el documento a ser impreso
-            <proximo ++>                                //PREGUNTAR:  HASTA DOONDE VA LA EXCLUSION MUTUA??? como hay un solo recurso, se debe hacer desde
-        }                                                               linea 23 a 25 inclusive?
+            proximo ++                                
+        }                                               
 
     c)	Modifique la solución de (a) para el caso en que se deba respetar el orden dado por el identificador del proceso (cuando está
         libre la impresora, de los procesos que han solicitado su uso la debe usar el que tenga menor identificador).
@@ -64,9 +65,9 @@ opcion A
         
         process persona[id : 0..n-1]{
             Documento documento;            //crear documento
-            <await (siguiente==id);         // DONDE CIERRA EL AWAIT??? en linea 78 o 80?
+            <await (siguiente==id);>
             imprimir(documento)
-           siguiente++>
+            siguiente++
         }
 
 
@@ -79,11 +80,8 @@ opcion A
 
         process persona[id : 0..n-1]{
             Documento documento;                        //crear documento
-            < if (siguiente = -1); siguiente = id;     //evaluo si hay alguien en la cola, si no hay nadie, soy el siguiente.
-              else { 
-                   colaOrdenada.insertar(id)}>
-            
-            <await (siguiente==id); listo = False> 
+            <colaOrdenada.insertar(id)>
+            <await (siguiente==id);> 
             imprimir(documento);    	                //envio el documento a ser impreso
             listo = true;
         }
@@ -91,14 +89,8 @@ opcion A
 
         process Coordinador::{
             while(true){
-                <if (colaOrdenada.empy()){
-                    siguiente =-1;
-                }else{
-                    siguiente = colaOrdenada.pop();
-                }>    
-                <await (listo)>
+                <if (!colaOrdenada.empy()); siguiente = colaOrdenada.pop();>    
+                <await (listo); listo = False>
             }
-
-
         }
         

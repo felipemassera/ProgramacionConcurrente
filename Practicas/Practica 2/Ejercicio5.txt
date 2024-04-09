@@ -34,9 +34,6 @@ Process Entregador::
         **ENTREGO PAQUETE**
     }
 }
-DUDA: EN ESTE CASO NO ESTOY TRABAJANDO DE AUNA CAJA A LA VEZ?? O sea una vez cargado el contenedor,
- el preparador no puede depositar el prox paquete en la caja hasta que no sea extraida por el entregador.
-No seria lo mismo hacerlo de la manera de abajo? 
 
 b)Modifique la solución a) para el caso en que haya P empleados Preparadores.
 
@@ -44,44 +41,16 @@ sem vacio=1; lleno =0;                      //uso dos semaforos para que se info
 sem mutex=1;                                //semaforo que indica cuando escribo sobre el array y modifico Libre/ocupado;
 Contenedor colaContenedores[0..N-1];        //cola circular de contenedores
 int ocupado=0; libre =0;                    //estos marcan el estado de la cola. el primero que este libre y el primero que este ocupado;
-
-Process Preparador [id:1..P]::
-{
-    while (true){
-        **PREPARO PAQUETE**
-        P(vacio);                           //chequeo que contenedor este vacio; chequea que [vacio>0];
-            P(mutex);                           //solicita por exclusion mutua el acceso a var globales;
-                contenedor[libre] = paquete;        //deposito el paquete en el primer lugar libre
-                libre = (libre +1) mod N;           //muevo la guia al siguiente contenedor libre
-            V(mutex);                           //como hay mas de 1 preparador, se bloquea la modificacion de libre=...
-        V(lleno);                           //libero el contenedor
-    }
-}
-
-Process Entregador::
-{
-    while(true){
-        P(lleno);                           //chequeo que el contenedor tenga el paquete
-            P(mutex);
-                paquete= contenedor[ocupado]        //Saco paquete
-            V(mutex);                           //no hace falta que el v(mutex) sea posterior a ocupado=ocupado... ya que nadie modifica la var
-        ocupado= (ocupado+1)mod N;              mas que el unico entregador.
-        V(vacio);                           //libero el contenedor
-        **ENTREGO PAQUETE**
-    }
-}
-
 -----------------------------------
 
-Process Preparador::
-{
+Process Preparador:: [0..P-1] {
     while (true){
         **PREPARO PAQUETE**
-        P(vacio[libre]);                                   //chequeo que contenedor este vacio
-            contenedor[libre] = paquete;        //deposito el paquete en el primer lugar libre
-            libre_old = libre;                   //muevo la guia al siguiente contenedor libre
-            libre = (libre +1) mod N;                   //muevo la guia al siguiente contenedor libre
-        V(lleno[libre_old])                                    //libero el contenedor
+        P(vacio[libre]);                    //chequeo que contenedor este vacio
+            contenedor[libre] = paquete;    //deposito el paquete en el primer lugar libre
+            libre_old = libre;              //REcuerdo cual es el anterior indice para que al moverlo al siguiente no perder el puntero.
+            libre = (libre +1) mod N;       //muevo la guia al siguiente contenedor libre
+        V(lleno[libre_old])                 //libero el contenedor
     }
 }
 
@@ -107,21 +76,20 @@ Process Preparador::
 {
     while (true){
         **PREPARO PAQUETE**
-        P(vacio[libre]);                                   //chequeo que contenedor este vacio
+        P(vacio[libre]);                        //chequeo que contenedor este vacio
             contenedor[libre] = paquete;        //deposito el paquete en el primer lugar libre
-        V(lleno[libre])                                    //libero el contenedor
-        libre = (libre +1) mod N;                   //muevo la guia al siguiente contenedor libre
+        V(lleno[libre])                         //libero el contenedor
+        libre = (libre +1) mod N;               //muevo la guia al siguiente contenedor libre
     }
 }
 
-Process Entregador::
-{
+Process Entregador:: [0..E-1]{
     while(true){
         P(lleno[ocupado]);
             paquete= contenedor[ocupado]
-            ocupado_old= ocupado;    
-            ocupado= (ocupado+1)mod N;
-        V(vacio[ocupado_old]);                           
+            ocupado_old= ocupado;           //recuerdo el puntero anterior antes de modificarlo.
+            ocupado= (ocupado+1)mod N;      //modifico el puntero
+        V(vacio[ocupado_old]);              //libero el vector en la posicion anterior
         **ENTREGO PAQUETE**
     }
 }
@@ -133,20 +101,18 @@ sem mutex=1;                                //semaforo que indica cuando escribo
 Contenedor colaContenedores[0..N-1];        //cola circular de contenedores
 int ocupado=0; libre =0;                    //estos marcan el estado de la cola. el primero que este libre y el primero que este ocupado;
 
-Process Preparador::
-{
+Process Preparador [0..P-1] :: {
     while (true){
         **PREPARO PAQUETE**
         P(vacio[libre]);                                   //chequeo que contenedor este vacio
             contenedor[libre] = paquete;        //deposito el paquete en el primer lugar libre
-            libre_old = libre;                   //muevo la guia al siguiente contenedor libre
+            libre_old = libre;                  //muevo la guia al siguiente contenedor libre
             libre = (libre +1) mod N;                   //muevo la guia al siguiente contenedor libre
         V(lleno[libre_old])                                    //libero el contenedor
     }
 }
 
-Process Entregador::
-{
+Process Entregador [0..E-1]:: {
     while(true){
         P(lleno[ocupado]);
             paquete= contenedor[ocupado]
