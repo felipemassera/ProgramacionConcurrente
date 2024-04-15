@@ -18,6 +18,7 @@ https://fabian-martinez-rincon.github.io/Programacion-Concurrente/Documentos/Pra
       }
 
     b) Modifique la solución de (a) para el caso en que se deba respetar el orden de llegada.
+      
       sem[] colaEspera=([N] 0);
       sem encolar =1;
       Cola colaPersonas;
@@ -45,7 +46,9 @@ https://fabian-martinez-rincon.github.io/Programacion-Concurrente/Documentos/Pra
                   v(colaEspera[aux]);        //aviso al proximo de la lista que sigue.
             V(encolar);
 
-    c) Modifique la solución de (a) para el caso en que se deba respetar estrictamente el orden dado por el identificador del proceso (la persona X no puede usar la impresora hasta que no haya terminado de usarla la persona X-1).
+    c) Modifique la solución de (a) para el caso en que se deba respetar estrictamente el orden dado por el identificador
+      del proceso (la persona X no puede usar la impresora hasta que no haya terminado de usarla la persona X-1).
+      
       colaOrdenada cola;   //esta cola esta ordenada por id
       sem var=1;  sem[] colaEspera([N] 0);
       boolean libre = true;
@@ -73,33 +76,33 @@ https://fabian-martinez-rincon.github.io/Programacion-Concurrente/Documentos/Pra
             V(var)
       }
 
-    d) Modifique la solución de (b) para el caso en que además hay un proceso Coordinador
-       CONTINUAR
-       
+    d) Modifique la solución de (b) para el caso en que además hay un proceso Coordinador       
        que le indica a cada persona que es su turno de usar la impresora.
 
       sem[] colaEspera=([N] 0);
-      sem encolar =1;
+      sem varGlobal =1;
       Cola colaPersonas;
       boolean libre=true;
 
       Process persona [id: 0..N-1]::{
-         int aux; 
-
          ***creo Documento***
-         P(encolar);
-               colaPersonas.encolar(id);     //me encolo
-         V(encolar);                   //libero var libre
-
+         P(varGlobal);
+            colaPersonas.push(id);     //me encolo
+         V(varGlobal);                 //libero var libre
          p(colaEspera[id]);            //quedo a la espera del aviso que me toca: V(colaEspera[id]);
             imprimir(Documento);
-         v(colaEspera[aux]);        //aviso al proximo de la lista que sigue.
+         v(colaEspera[id]);        //aviso al proximo de la lista que sigue.
       }   
 
       Process coordinador:: {
-         
+         int aux;
 
-
+         while (true){
+            P(varGlobal);
+            if (!colaPersonas.empy()){}
+               aux=colaPersonas.pop();
+               
+         }
       }
 
     e) Modificar la solución (d) para el caso en que sean 5 impresoras. El coordinador
