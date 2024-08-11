@@ -1,0 +1,124 @@
+5.En una empresa de logística de paquetes existe una sala de contenedores donde se preparan las entregas.
+Cada contenedor puede almacenar un paquete y la sala cuenta con capacidad para N contenedores.
+Resuelva considerando las siguientes situaciones:
+
+a)La empresa cuenta con 2 empleados: un empleado Preparador que se ocupa de preparar los paquetes
+ y dejarlos en los contenedores; un empelado Entregador que se ocupa de tomar los paquetes de los 
+ contenedores y realizar la entregas. Tanto el Preparador como el Entregador trabajan de a un paquete por vez.
+
+*****************EJEMPLO PRODUCTOR -> CONSUMIDOR// BUFFERS LIMITADOS(teoria 4 pag 12)*****************
+
+sem vacio=1; lleno =0;                      //uso dos semaforos para que se informen  entre ellos el estado del contenedor;
+sem mutex=1;                                //semaforo que indica cuando escribo sobre el array y modifico Libre/ocupado;
+Contenedor colaContenedores[0..N-1];        //cola circular de contenedores
+int ocupado=0; libre =0;                    //estos marcan el estado de la cola. el primero que este libre y el primero que este ocupado;
+
+Process Preparador::
+{
+    while (true){
+        **PREPARO PAQUETE**
+        P(vacio[libre]);                                   //chequeo que contenedor este vacio
+            contenedor[libre] = paquete;        //deposito el paquete en el primer lugar libre
+        V(lleno[libre])                                    //libero el contenedor
+        libre = (libre +1) mod N;                   //muevo la guia al siguiente contenedor libre
+    }
+}
+
+Process Entregador::
+{
+    while(true){
+        P(lleno[ocupado]);
+            paquete= contenedor[ocupado]    
+        V(vacio[ocupado]);                           
+        ocupado= (ocupado+1)mod N;
+        **ENTREGO PAQUETE**
+    }
+}
+
+b)Modifique la solución a) para el caso en que haya P empleados Preparadores.
+
+sem vacio=1; lleno =0;                      //uso dos semaforos para que se informen  entre ellos el estado del contenedor;
+sem mutex=1;                                //semaforo que indica cuando escribo sobre el array y modifico Libre/ocupado;
+Contenedor colaContenedores[0..N-1];        //cola circular de contenedores
+int ocupado=0; libre =0;                    //estos marcan el estado de la cola. el primero que este libre y el primero que este ocupado;
+-----------------------------------
+
+Process Preparador:: [0..P-1] {
+    while (true){
+        **PREPARO PAQUETE**
+        P(vacio[libre]);                    //chequeo que contenedor este vacio
+            contenedor[libre] = paquete;    //deposito el paquete en el primer lugar libre
+            libre_old = libre;              //REcuerdo cual es el anterior indice para que al moverlo al siguiente no perder el puntero.
+            libre = (libre +1) mod N;       //muevo la guia al siguiente contenedor libre
+        V(lleno[libre_old])                 //libero el contenedor
+    }
+}
+
+Process Entregador::
+{
+    while(true){
+        P(lleno[ocupado]);
+            paquete= contenedor[ocupado]    
+        V(vacio[ocupado]);                           
+        ocupado= (ocupado+1)mod N;
+        **ENTREGO PAQUETE**
+    }
+}
+
+c)Modifique la solución a) para el caso en que haya E empleados Entregadores.
+
+sem vacio=1; lleno =0;                      //uso dos semaforos para que se informen  entre ellos el estado del contenedor;
+sem mutex=1;                                //semaforo que indica cuando escribo sobre el array y modifico Libre/ocupado;
+Contenedor colaContenedores[0..N-1];        //cola circular de contenedores
+int ocupado=0; libre =0;                    //estos marcan el estado de la cola. el primero que este libre y el primero que este ocupado;
+
+Process Preparador::
+{
+    while (true){
+        **PREPARO PAQUETE**
+        P(vacio[libre]);                        //chequeo que contenedor este vacio
+            contenedor[libre] = paquete;        //deposito el paquete en el primer lugar libre
+        V(lleno[libre])                         //libero el contenedor
+        libre = (libre +1) mod N;               //muevo la guia al siguiente contenedor libre
+    }
+}
+
+Process Entregador:: [0..E-1]{
+    while(true){
+        P(lleno[ocupado]);
+            paquete= contenedor[ocupado]
+            ocupado_old= ocupado;           //recuerdo el puntero anterior antes de modificarlo.
+            ocupado= (ocupado+1)mod N;      //modifico el puntero
+        V(vacio[ocupado_old]);              //libero el vector en la posicion anterior
+        **ENTREGO PAQUETE**
+    }
+}
+
+d)Modifique la solución a) para el caso en que haya P empleados Preparadores y E empleadores Entregadores.
+
+sem vacio=1; lleno =0;                      //uso dos semaforos para que se informen  entre ellos el estado del contenedor;
+sem mutex=1;                                //semaforo que indica cuando escribo sobre el array y modifico Libre/ocupado;
+Contenedor colaContenedores[0..N-1];        //cola circular de contenedores
+int ocupado=0; libre =0;                    //estos marcan el estado de la cola. el primero que este libre y el primero que este ocupado;
+
+Process Preparador [0..P-1] :: {
+    while (true){
+        **PREPARO PAQUETE**
+        P(vacio[libre]);                                   //chequeo que contenedor este vacio
+            contenedor[libre] = paquete;        //deposito el paquete en el primer lugar libre
+            libre_old = libre;                  //muevo la guia al siguiente contenedor libre
+            libre = (libre +1) mod N;                   //muevo la guia al siguiente contenedor libre
+        V(lleno[libre_old])                                    //libero el contenedor
+    }
+}
+
+Process Entregador [0..E-1]:: {
+    while(true){
+        P(lleno[ocupado]);
+            paquete= contenedor[ocupado]
+            ocupado_old= ocupado;    
+            ocupado= (ocupado+1)mod N;
+        V(vacio[ocupado_old]);                           
+        **ENTREGO PAQUETE**
+    }
+}

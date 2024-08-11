@@ -1,0 +1,37 @@
+4.Suponga que existe una BD que puede ser accedida por 6 usuarios como máximo al mismo tiempo.
+  Además, los usuarios se clasifican como usuarios de prioridad alta y usuarios de prioridad baja.
+  Por último, la BD tiene la siguiente restricción:
+    •no puede haber más de 4 usuarios con prioridad alta al mismo tiempo usando la BD.
+    •no puede haber más de 5 usuarios con prioridad baja al mismo tiempo usando la BD.
+Indique si la solución presentada es la más adecuada. Justifique la respuesta.
+
+Var
+sem: semaphoro := 6;
+alta: semaphoro := 4;
+baja: semaphoro := 5;
+
+Process Usuario-Alta [I:1..L]::        ||         Process Usuario-Baja [I:1..K]::
+{   P (sem);                           ||         {   P (sem);
+    P (alta);                          ||             P (baja);
+    //usa la BD                        ||             //usa la BD
+    V(sem);                            ||             V(sem);
+    V(alta);                           ||             V(baja);
+}                                      ||         }
+
+RESPUESTA:
+No, no es la mas adecuada. P(alta) y P(baja) deberian ir antes de P(sem),
+ya que evita demora innecesaria al preguntar si hay primero espacio para gente de
+alta/baja antes de reservar el espacio para entrar.
+SIEMPRE SE BLOQUEA DE LO PARTICULAR A LO GENERAL. 
+ya que sino puede bloquerse algo general (cerrando el cupo) que nunca suceda en el bloqueo inferior.
+ej: en el proceso Usuario-alta, pasa un usuario de prioridad baja, accede al p(sem),
+por ser menor a 6 usuarios en simultaneo. Pero nunca pasa p(alta), bloqueando el sistema. 
+
+CORRECTO CODIGO
+Process Usuario-Alta [I:1..L]::        ||         Process Usuario-Baja [I:1..K]::
+{   P (alta);                          ||         {   P (baja);
+    P (sem);                           ||             P (sem);
+    //usa la BD                        ||             //usa la BD
+    V(sem);                            ||             V(sem);
+    V(alta);                           ||             V(baja);
+}                                      ||         }

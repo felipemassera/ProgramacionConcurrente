@@ -1,0 +1,21 @@
+1.	Para el siguiente programa concurrente suponga que todas las variables están inicializadas en 0
+ antes de empezar. Indique cual/es de las siguientes opciones son verdaderas:
+
+P1:: 
+If (x = 0) then 
+y:= 4*2; 
+x:= y + 2; 
+
+P2:: 
+If (x > 0) then 
+x:= x + 1; 
+
+P3:: 
+x:= (x*3) + (x*2) + 1; 
+
+        1. En algún caso el valor de x al terminar el programa es 56.  
+            ▪ Si, si se ejecuta todo p1 → p2 → p3  =  56
+        2. En algún caso el valor de x al terminar el programa es 22. 
+            ▪ NO SE
+        3. En algún caso el valor de x al terminar el programa es 23. 
+            ▪ NO SE

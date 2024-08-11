@@ -1,0 +1,29 @@
+3. Un sistema operativo mantiene 5 instancias de un recurso almacenadas en una cola.
+Además, existen P procesos que necesitan usar una instancia del recurso. Para eso, 
+deben sacar la instancia de la cola antes de usarla. Una vez usada, la instancia debe
+ser encolada nuevamente.
+
+NOTA: RECORDAR QUE SOLO PUEDE ENCOLAR Y DESENCOLAR DE A 1 PROCESO A LA VEZ!!!
+
+<<< OPCION C >>> Usando un semaforo de espera.
+sem mutex = 1, espera = 5   //uso un semaforo para acceder a la cola.
+                              y otro para contabilizar los recursos disponibles =5.
+cola colaRecursos[5];       //utilizo la cola de recursos
+Recurso recurso;
+
+Process Proceso[id:0..P-1]::
+{
+    while(true){
+        P(espera)                               //solicito usar un recurso, si hay disponibles >0, te deja pasar y resta uno.
+            P(mutex);                           // solicita el acceso a la cola de recursos
+                recursos= colaRecursos.pop();
+            V(mutex);                           // libera la cola de recursos
+            ***Uso Recurso***    
+            P(mutex);
+            colaRecursos.push(recurso);
+            V(mutex);
+        V(espera);                              //informa que el recurso usado esta libre nuevamente. espera +1.
+    }
+}
+
+

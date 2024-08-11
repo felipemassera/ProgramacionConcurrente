@@ -1,0 +1,33 @@
+6.	Resolver con SENTENCIAS AWAIT (<> y/o <await B; S>) el siguiente problema. 
+En un examen final hay P alumnos y 3 profesores. Cuando todos los alumnos han
+llegado comienza el examen. 
+Cada alumno resuelve su examen, lo entrega y espera a que alguno de los profesores
+ lo corrija y le indique la nota. Los profesores corrigen los exámenes respectando
+  el orden en que los alumnos van entregando. 
+
+
+ cola colaEntrega [1..p];
+ int[] notas = ([P] 0) 
+ int corregidos = 0; totalAlumnos=0; 
+
+process alumno[id:1..P]{
+    <totalAlumnos= totalAlumnos + 1>    //avisar que llegue
+    <await (total==P);>                 //esperar a que llegue el resto
+    ***HAGO EXAMEN***                   // Hacer examen    
+    colaEntrega.push(id);               //entrego el examen
+    <await (notas[id]<>0)>              //esperar nota
+    ***SE RETIRA***
+}
+
+process profesores [id: 1..3]{
+    int idAlumno =-1; nota =0;
+
+    <await (total==P)>              //esperar que lleguen todos los alumnos
+    while (corregido<P)> {          //mientras que la cantidad de examenes sea < a la cant de alumnos itera.
+       <await (!colaEntrega.empy());idAlumno=colaEntrega.pop()> // si la cola tiene un examen, lo saco. sino espero.
+       ***SE CORRIGE EL EXAMEN***
+       <corregidos ++>
+       notas[idAlumno] = nota       //entego nota                                       
+    }
+    //fin examen general es cuando el total=P para salir While
+}

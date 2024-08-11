@@ -1,0 +1,62 @@
+2.Un sistema de control cuenta con 4 procesos que realizan chequeos en forma colaborativa.
+ Para ello, reciben el historial de fallos del día anterior (por simplicidad, de tamaño N).
+ De cada fallo, se conoce su número de identificación (ID) y su nivel de gravedad (0=bajo,
+ 1=intermedio, 2=alto, 3=crítico). Resuelva considerando las siguientes situaciones:
+
+a) Se debe imprimir en pantalla los ID de todos los errores críticos (no importa el orden).
+    
+    sem semInforme=1; int cantInformes = 0 ; Cola colaInforme=([N] informes);
+
+    process chequeo [id: 0..3]::
+    {   
+        p(semInforme);                         //pido usar el semInforme
+        while (!empty(colaInforme)) {
+            error = colaInforme.pop();
+            v(semInforme);
+            if (error==3) imprimir;
+            p(semInforme);
+        }
+        v(semInforme);
+    }
+
+
+b)Se debe calcular la cantidad de fallos por nivel de gravedad, debiendo quedar los resultados en un vector global.
+    
+    sem semInforme=1; int cantInformes = 0 ; Cola colaInforme=([N] informes); 
+    int[] vectorContador = ([4] 0);
+    sem[] vectorSem = ([4] 1);
+   
+    process chequeo [id: 0..3]::
+    {   
+        p(semInforme);                         //pido usar el semInforme
+        while (!empty(colaInforme)) {
+            error = colaInforme.pop();
+            v(semInforme);
+            P(vectorSem[error])
+            vectorContador[error] = vectorContador[error] + 1;
+            V(vectorSem[error])
+            p(semInforme);
+        }
+        v(semInforme);
+    }
+
+c) Ídem "b)" pero cada proceso debe ocuparse de contar los fallos de un nivel de gravedad determinado.
+
+   sem semInforme=1; int cantInformes = 0 ; Cola colaInforme=([N] informes); 
+    int[] vectorContador = ([4] 0);
+    sem[] vectorSem = ([4] 1);
+   
+    process chequeo [id: 0..3]::
+    {
+        Cola cola_local;
+
+        p(semInforme);                         //pido usar el semInforme
+        cola_local = colaInforme.clone()        //CLono la lista ya que cada proceso debera recorrer si o si toda la lista para contar la que le corresponte.
+        v(semInforme);
+
+        while (!empty(cola_local)) {
+            error = cola_local.pop();
+            if (error = id)
+                vectorContador[id] = vectorContador[id] + 1;
+        }
+    }

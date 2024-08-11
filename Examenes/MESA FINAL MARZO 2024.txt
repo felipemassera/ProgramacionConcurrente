@@ -1,8 +1,0 @@
-[13/3/2024 10:30] +54 9 221 642-4127: Tomaron:
-[13/3/2024 10:30] +54 9 221 642-4127: Propiedad a lo sumo una vez
-[13/3/2024 10:30] +54 9 221 642-4127: Comunicación guardada: descripción + un ejercicio
-[13/3/2024 10:30] +54 9 221 642-4127: Eficiencia: definiciones y ejercicios
-[13/3/2024 10:30] +54 9 221 642-4127: Y de práctico
-[13/3/2024 10:30] +54 9 221 642-4127: Exclusión mutua con token passing
-[13/3/2024 10:31] +54 9 221 642-4127: Y la típica de arquitectura centralizada, circular y estrella
-[13/3/2024 10:31] +54 9 221 642-4127: y arbol
