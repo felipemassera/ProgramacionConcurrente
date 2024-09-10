@@ -1,62 +1,58 @@
 2.Un sistema de control cuenta con 4 procesos que realizan chequeos en forma colaborativa.
  Para ello, reciben el historial de fallos del día anterior (por simplicidad, de tamaño N).
  De cada fallo, se conoce su número de identificación (ID) y su nivel de gravedad (0=bajo,
- 1=intermedio, 2=alto, 3=crítico). Resuelva considerando las siguientes situaciones:
+ 1=intermedio, 2=alto, 3=crítico). Resuelva considerando las siguientes situaciones.
 
 a) Se debe imprimir en pantalla los ID de todos los errores críticos (no importa el orden).
-    
-    sem semInforme=1; int cantInformes = 0 ; Cola colaInforme=([N] informes);
+	mutex = a pedir el uso de VAR COMPARTIDAS
+    sem mutex=1; Cola colaFallos=([N] fallos);        NOTA: fallo(id, gravedad)
 
-    process chequeo [id: 0..3]::
-    {   
-        p(semInforme);                         //pido usar el semInforme
-        while (!empty(colaInforme)) {
-            error = colaInforme.pop();
-            v(semInforme);
-            if (error==3) imprimir;
-            p(semInforme);
+    process chequeo [id: 0..3] {   
+	fallo fallo;
+        p(mutex);                         //pido usar las var compartidas
+        while (!colafallos.empty()) {
+            fallo = colaFallo.pop();
+            v(mutex);
+            if (fallo.gravedad() ==3) print(fallo.id());
+            p(mutex);
         }
-        v(semInforme);
+        v(mutex);
     }
 
 
 b)Se debe calcular la cantidad de fallos por nivel de gravedad, debiendo quedar los resultados en un vector global.
-    
-    sem semInforme=1; int cantInformes = 0 ; Cola colaInforme=([N] informes); 
+    sem mutex=1; Cola colaFallos=([N] fallos);    
     int[] vectorContador = ([4] 0);
-    sem[] vectorSem = ([4] 1);
    
-    process chequeo [id: 0..3]::
-    {   
-        p(semInforme);                         //pido usar el semInforme
-        while (!empty(colaInforme)) {
-            error = colaInforme.pop();
-            v(semInforme);
-            P(vectorSem[error])
-            vectorContador[error] = vectorContador[error] + 1;
-            V(vectorSem[error])
-            p(semInforme);
+    process chequeo [id: 0..3] {					CONSULTAR TEMA CONCURRENCIA EN EL VECTOR, COMO MEJORARLA.
+	fallo fallo;
+        p(mutex);                        
+        while (!colafallos.empty()) {
+            	fallo = colaFallos.pop();
+		vectorContador[fallo.gravedad()] = vectorContador[fallo.gravedad()]+1;
+		v(mutex);
+            	p(mutex);
         }
-        v(semInforme);
+        v(mutex);
     }
 
 c) Ídem "b)" pero cada proceso debe ocuparse de contar los fallos de un nivel de gravedad determinado.
 
-   sem semInforme=1; int cantInformes = 0 ; Cola colaInforme=([N] informes); 
-    int[] vectorContador = ([4] 0);
-    sem[] vectorSem = ([4] 1);
+    sem mutex=1; Cola colaFallos=([N] fallos); int[] vectorContador = ([4] 0);
    
     process chequeo [id: 0..3]::
     {
-        Cola cola_local;
+        Cola cola_local; fallo fallo
+        p(mutex);                         	//pido usar var compartidas
+        cola_local = colaFallos.clone()        //CLono la lista ya que cada proceso debera recorrer si o si toda la lista para contar la que le corresponte.
+        v(mutex);
 
-        p(semInforme);                         //pido usar el semInforme
-        cola_local = colaInforme.clone()        //CLono la lista ya que cada proceso debera recorrer si o si toda la lista para contar la que le corresponte.
-        v(semInforme);
-
-        while (!empty(cola_local)) {
-            error = cola_local.pop();
-            if (error = id)
+        while (!cola_local.empty()) {
+            fallo = cola_local.pop();
+            if (fallo.gravedad()==id){
+		p(mutex);
                 vectorContador[id] = vectorContador[id] + 1;
+		v(mutex);
+	    }
         }
     }
