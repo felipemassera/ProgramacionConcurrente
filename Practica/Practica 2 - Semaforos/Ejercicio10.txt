@@ -1,0 +1,92 @@
+10. A una cerealera van T camiones a descargarse trigo y M camiones a descargar maíz. Sólo
+hay lugar para que 7 camiones a la vez descarguen, pero no pueden ser más de 5 del mismo
+tipo de cereal.
+a) Implemente una solución que use un proceso extra que actúe como coordinador
+entre los camiones. El coordinador debe retirarse cuando todos los camiones han
+descargado.
+b) Implemente una solución que no use procesos adicionales (sólo camiones).
+
+A)int cantidadCamionesTrigo= 0; int cantidadCamionesMaiz = 0; int camionesQueTerminaron = 0;
+sem mutexAccesoTrigo = 1; sem mutexAccesoMaiz =1; sem maximoTotalCamiones=7; sem pasaTrigo[T] = ([T], 0); sem pasaMaiz[M] = ([M],0);
+sem mutexTerminaron = 1; ; sem hayCamiones = 0; sem mutexColaTrigo = 1; sem mutexColaMaiz = 1;
+colaCamionesTrigo colaTrigo; colaCamionesMaiz colaMaiz; 
+
+
+Process CamionMaiz[id: O...M-1] {
+    	P(mutexColaMaiz);
+    	colaMaiz.push(id);  	// agrego el camión a la cola
+    	V(mutexColaMaiz);
+   	V(hayCamiones);  		// aviso al coordinador que llegué
+	p(pasaMaiz[id]);  		// espero a que me habiliten el paso
+    	//USO RAMPA
+    	P(mutexAccesoMaiz);
+    	cantidadCamionesMaiz--;  	// disminuyo la cantidad de camiones maiz
+    	V(mutexAccesoMaiz);
+    	V(maximoTotalCamiones);
+    	P(mutexTerminaron);
+    	camionesQueTerminaron++;  	// aumento la cantidad de camiones que terminaron
+    	V(mutexTerminaron);
+}
+Process CamionTrigo[id: 0 ... T - 1] {
+    	P(mutexColaTrigo);
+    	camionesTrigo.push(id);  	// agrego ID del camión a la cola
+    	V(mutexColaTrigo);
+    	V(hayCamiones);  		// aviso que hay camiones esperando
+    	P(pasaTrigo[id]);  		// espero a que me den paso
+    	//USO RAMPA
+    	P(mutexAccesoTrigo);
+    	cantidadCamionesTrigo--;  	// disminuyo la cantidad de camiones trigo
+    	V(mutexAccesoTrigo);
+    	V(maximoTotalCamiones);
+    	P(mutexTerminaron);
+    	camionesQueTerminaron++;  	// aumento la cantidad de camiones que terminaron
+    	V(mutexTerminaron);
+}
+Process Coordinador {
+    	P(mutexTerminaron); 
+    	while(camionesQueTerminaron < (M + T)){ 	// mientras no hayan terminado todos los camiones
+        	V(mutexTerminaron)
+        	P(hayCamiones); 	// espero a que haya camiones esperando
+        	P(mutexAccesoTrigo);  
+        	P(mutexCamionesTrigo);
+        	P(maximoTotalCamiones);
+        	if (cantidadCamionesTrigo <= 5 && !camionesTrigoIsEmpty()){  // si hay lugar para más camiones trigo y la cola de los de trigo no está vacía
+            		cantidadCamionesTrigo++;
+            		V(mutexAccesoTrigo);
+            		id = camionesTrigo.pop();
+            		V(mutexCamionesTrigo);
+            		V(pasaTrigo[id]);  // habilito paso al camión de trigo
+        	}
+        	V(mutexAccesoTrigo); 
+        	V(mutexCamionesTrigo);
+        	P(mutexAccesoMaiz);  
+        	P(mutexCamionesMaiz);
+        	if (cantidadCamionesMaiz <= 5 && !camionesMaizIsEmpty()){  // si hay lugar para más camiones maíz y la cola de los de trigo no está vacía
+            		cantidadCamionesMaiz++;
+            		V(mutexAccesoMaiz);
+            		id = camionesMaiz.pop();
+            		V(mutexCamionesMaiz);
+            		V(pasaMaiz[id]);  // habilito paso al camión de maíz
+        	}
+        	V(mutexAccesoTrigo); 
+		V(mutexCamionesMaiz);
+        	P(mutexTerminaron);
+    	}
+}
+
+B)sem totalRampa=7; sem totalTrigo=5;sem totalMaiz=5; 
+
+process Trigo[id: 0..T-1]{
+	p(totalTrigo);
+	p(totalRampa);
+	//USO RAMPA
+	v(totalRampa);
+	v(totalTrigo)	
+}
+process Maiz[id: 0..M-1]{
+	p(totalMaiz);
+	p(totalRampa);
+	//USO RAMPA
+	v(totalRampa);
+	v(totalMaiz)
+}

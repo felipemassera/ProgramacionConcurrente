@@ -1,0 +1,57 @@
+7. Suponga que se tiene un curso con 50 alumnos. Cada alumno debe realizar una tarea y
+existen 10 enunciados posibles. Una vez que todos los alumnos eligieron su tarea,
+comienzan a realizarla. Cada vez que un alumno termina su tarea, le avisa al profesor y se
+queda esperando el puntaje del grupo (depende de todos aquellos que comparten el
+mismo enunciado). Cuando un grupo terminó, el profesor les otorga un puntaje que
+representa el orden en que se terminó esa tarea de las 10 posibles.
+
+Nota: Para elegir la tarea suponga que existe una función "elegir" que le asigna una tarea a
+un alumno (esta función asignará 10 tareas diferentes entre 50 alumnos, es decir, que 5
+alumnos tendrán la tarea 1, otros 5 la tarea 2 y así sucesivamente para las 10 tareas).
+
+colaTarea[50]; sem accesoColaTarea=1 ; int calificaciones[10]=([10]0) ;sem avisoCalificaciones[10]=([10]0);
+sem barrera[50]=([50]0); sem llegaAlumnos=0;sem informoTarea=0; int ContadorEntrada=0; sem accesoContadorEntrada=1;
+
+process profesor {
+	int tarea; nota = 10; int contador[10]=([10]0);
+	p(lleganAlumnos);
+	for (j=0, j<50,j++){				//barrera para que arranquen
+		v(barrera[j]);
+	}
+	for (i=0, i<50,i++) {				//califico alumnos
+		p(informoTarea);
+		p(accesoColaTarea);
+		 tarea =colaTarea.pop();
+		v(accesoColaTarea);
+		contador[tarea]++;
+		if (contador[tarea] == 5){
+			calificaciones[tarea]= nota;
+			nota --;
+			for (k=0,k<5,k++){		// se informan a los 5 alumnos que esta la nota
+				v(avisoCalificaciones[tarea]);
+			}
+		}
+	}
+}
+process alumno [id: 0..n-1]{
+	int tarea; int puntaje; 
+	tarea= elegirTarea();
+	p(accesoContadorEntrada);       //controlo el acceso de los alumnos.
+	 ContadorEntrada++;
+	 if (ContadorEntrada++ == 50){
+		v(lleganAlumnos);	//informo cuando estan los 50 al profe para que arranque la barrera
+	 }
+	v(accesoContadorEntrada);
+	p(barrera[id]);			// espero que el profesor me diga cuando arrancar
+	//resuelve examen;
+
+	p(accesoColaTarea);		//informo que termine el examen
+	 colaTarea.push(tarea);
+	v(accesoColaTarea);
+	v(informoTarea);
+	p(avisoCalificaciones[tarea]);
+}			
+
+
+
+	

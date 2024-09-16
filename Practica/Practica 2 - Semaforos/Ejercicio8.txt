@@ -1,0 +1,45 @@
+8. Una fábrica de piezas metálicas debe producir T piezas por día. Para eso, cuenta con E
+empleados que se ocupan de producir las piezas de a una por vez. La fábrica empieza a
+producir una vez que todos los empleados llegaron. Mientras haya piezas por fabricar, los
+empleados tomarán una y la realizarán. Cada empleado puede tardar distinto tiempo en
+fabricar una pieza. Al finalizar el día, se debe conocer cual es el empleado que más piezas
+fabricó.
+a) Implemente una solución asumiendo que T > E.
+b) Implemente una solución que contemple cualquier valor de T y E.
+
+sem mutexContadorE=1 ;sem llegaronTodos=0; sem mutexPiezasHechas=1; sem mutexMaxCant=1;
+int contadorE=0; int PiezasHechas=0 ; int TotalPiezas=T; 
+int maxCant=-1; int maxID=-1;
+
+process empleado [id: 0..E]{
+	int cantPiezas=0;
+	p(mutexContadorE);
+	contadorE++;
+	if(contadorE == E){			//BARRERA
+		v(mutexContadorE);
+		for (i=0, i<E,i++){
+			v(llegaronTodos);
+		}
+	}else{
+		v(mutexContadorE);	
+	}
+	p(llegaronTodos[id]);
+		
+	p(mutexPiezasHechas);			//creo piezas
+	while (piezasHechas< TotalPiezas){
+		piezasHechas++;
+		v(mutexPiezasHechas);
+		//creo Pieza;
+		cantPiezas++;
+		p(mutexPiezasHechas);
+	}
+	v(mutexPiezasHechas);
+	
+	p(mutexMaxCant);			//calculo quien hizo mas piezas.
+	if (cantPiezas> max){
+		maxCant= cantPiezas];
+		maxID = id;
+	}
+	v(mutexMaxCant);
+		
+}

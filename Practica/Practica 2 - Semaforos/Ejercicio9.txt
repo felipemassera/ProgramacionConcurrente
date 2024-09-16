@@ -1,0 +1,54 @@
+9. Resolver el funcionamiento en una fábrica de ventanas con 7 empleados (4 carpinteros, 1
+vidriero y 2 armadores) que trabajan de la siguiente manera:
+• Los carpinteros continuamente hacen marcos (cada marco es armando por un único
+carpintero) y los deja en un depósito con capacidad de almacenar 30 marcos.
+• El vidriero continuamente hace vidrios y los deja en otro depósito con capacidad para
+50 vidrios.
+• Los armadores continuamente toman un marco y un vidrio (en ese orden) de los
+depósitos correspondientes y arman la ventana (cada ventana es armada por un único
+armador).
+
+depositoMarcos colaM; depositoVidrios colaV;
+sem depositoMlibre=30; sem depositoVlibre=50; sem mutexV=1; sem mutexM=1;
+sem vidrioOK=0;sem marcoOK=0;
+
+
+process carpinteros [id: 0..3]{
+	marcoVentana marco;
+	while(true){
+		marco = new marcoVentana();
+		P(depositoMlibre);
+		p(mutexM);
+		colaM.push(marco);
+		v(mutexM);
+		v(marcoOK);
+	}
+}
+process vidriero{
+	vidrioVentana vidrio;
+	while(true){
+		vidrio = new vidrioVentana();
+		P(depositoVlibre);
+		p(mutexV);
+		colaV.push(vidrio);
+		v(mutexV);
+		v(vidrioOK);
+	}
+}
+process armadores [id: 0..1]{
+	marcoVentana marco;
+	vidrioVentana vidrio;
+	while(true){
+		p(marcoOK);		//si hay marco nuevo lo saco y libero espacio del depositoM
+		p(mutexM);
+		marco= colaM.pop();
+		v(mutexM);
+		v(depositoMlibre);
+		p(vidrioOK);		//si hay marco nuevo lo saco y libero espacio del depositoM
+		p(mutexV);
+		vidrio= colaV.pop();
+		v(mutexV);
+		v(depositoVlibre);
+		ventana = armarVentana(marco, vidrio);
+	}
+}

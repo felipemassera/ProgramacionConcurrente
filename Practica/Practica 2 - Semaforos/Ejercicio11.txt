@@ -1,0 +1,41 @@
+11. En un vacunatorio hay un empleado de salud para vacunar a 50 personas. El empleado
+de salud atiende a las personas de acuerdo con el orden de llegada y de a 5 personas a la
+vez. Es decir, que cuando está libre debe esperar a que haya al menos 5 personas
+esperando, luego vacuna a las 5 primeras personas, y al terminar las deja ir para esperar
+por otras 5. Cuando ha atendido a las 50 personas el empleado de salud se retira. Nota:
+todos los procesos deben terminar su ejecución; suponga que el empleado tienen una
+función VacunarPersona() que simula que el empleado está vacunando a UNA persona.
+
+
+int cantidadPersonasEsperando =0; 
+sem mutexColaEspera=1; sem llegan5=1; sem personaVacunada[50]=([50]0);
+Cola colaEspera;
+
+process vacunador{
+	int cantidadAtendido=0; Cola CPersonasVacunadas;
+	while (cantidadAtendido<50){
+		p(llegan5);				//me informan que son 5
+		for (i:0, i<4,i++){
+			p(mutexColaEspera);		
+			persona= colaEspera.pop();	//saco a los 5 pacientes 1 a 1 de la cola 
+			v(mutexColaEspera);
+			VacunarPersona(persona);	//vacuno y aumento en 1 la cant de atendidos.
+			cantidadAtendido++;
+			CPersonasVacunadas.push(persona);
+		}
+		for (i:0, i<4,i++){		
+			v(personaVacunada[CPersonasVacunadas.pop()]);  //aviso al paciente que puede irse
+		}
+	}
+}
+
+process persona [id: 0..49]{
+	p(mutexColaEspera);
+	  colaEspera.push(id);				//me encolo para ser atendido
+	  cantidadPersonasEsperando++;			//me sumo como persona a la espera
+	  if(cantidadPersonasEsperando mod 5 == 0){	//si somos 5
+		v(llegan5);				//pasamos todos juntos
+	  }
+	v(mutexColaEspera);
+	p(personaVacunada[id]);				//espero que me avisen para retirarme.
+}

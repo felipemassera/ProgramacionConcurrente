@@ -6,15 +6,14 @@ ser encolada nuevamente.
 NOTA: RECORDAR QUE SOLO PUEDE ENCOLAR Y DESENCOLAR DE A 1 PROCESO A LA VEZ!!!
 
 <<< OPCION C >>> Usando un semaforo de espera.
-sem mutex = 1, espera = 5   //uso un semaforo para acceder a la cola.
-                              y otro para contabilizar los recursos disponibles =5.
-cola colaRecursos[5];       //utilizo la cola de recursos
-Recurso recurso;
+sem mutex = 1, recursosdisponibles = 5  //uso un semaforo para acceder a la cola (var compartida).
+                              		y otro para contabilizar los recursos disponibles =5.
+cola colaRecursos([5] recurso);       	//utilizo la cola inicializada con recursos.
 
-Process Proceso[id:0..P-1]::
-{
-    while(true){
-        P(espera)                               //solicito usar un recurso, si hay disponibles >0, te deja pasar y resta uno.
+
+Process Proceso[id:0..P-1]::{
+    	Recurso recurso;
+        P(recursosdisponibles)			//solicito usar un recurso, si (recursosdisponibles>0), te deja pasar y resta uno, sino espera a que haya alguno.
             P(mutex);                           // solicita el acceso a la cola de recursos
                 recursos= colaRecursos.pop();
             V(mutex);                           // libera la cola de recursos
@@ -22,8 +21,7 @@ Process Proceso[id:0..P-1]::
             P(mutex);
             colaRecursos.push(recurso);
             V(mutex);
-        V(espera);                              //informa que el recurso usado esta libre nuevamente. espera +1.
-    }
+        V(recursosdisponibles);                 //informa que el recurso usado esta libre nuevamente. espera +1.
 }
 
 
