@@ -9,3 +9,109 @@ b)Modifique la solución anterior para que sólo haya procesos Pasajeros y Enfer
  quienes determinan por su cuenta qué puesto tiene menos personas esperando.
 
 Nota: suponga que existe una función Hisopar() que simula la atención del pasajero por parte de la enfermera correspondiente.
+
+
+a)
+ColaPasajeros pasajerosEnRecepcion;
+ArrayColasPasajeros puestosEnfermeras[3] = ([3], 0);
+sem mutexRecepcion = 1;
+sem avisarRecepcion = 0;
+sem mutexPuestosEnfermeras[3] = ([3], 1);
+sem hayPasajeroEsperandoHisopado[3] = ([3], 0);
+sem esperarParaIrse[150] = ([150], 0);
+sem mutexHisopados = 1;
+int personasHisopadas=0;
+
+Process Pasajero[id: 0 ... 149] {
+    P(mutexRecepcion);
+    pasajerosEnRecepcion.push(id);  	// me encolo para que me atienda recepción
+    V(mutexRecepcion);
+    V(avisarRecepcion);  		// aviso a recepción que hay un pasajero esperando
+    P(esperarParaIrse[id]);  		// espero a que me avisen que puedo irme
+}
+
+Process Recepcionista {
+    int pasajeroActual; int puestoDesignado;
+    for (int i = 0; i < 150; i++) {
+        P(avisarRecepcion);  						// espero a que haya un pasajero esperando
+        P(mutexRecepcion);
+        pasajeroActual = pasajerosEnRecepcion.pop();			//saco id del pasajero
+        V(mutexRecepcion);
+        puestoDesignado = PuestoConMenosPasajeros();  			// obtengo el puesto con menos pasajeros
+        P(mutexPuestosEnfermeras[puestoDesignado]);
+        puestosEnfermeras[puestoDesignado].push(pasajeroActual);  	// agrego a la cola de pasajeros del puesto designado
+        V(mutexPuestosEnfermeras[puestoDesignado]);
+        V(hayPasajeroEsperandoHisopado[puestoDesignado]);  		// aviso que hay un pasajero esperando
+    }
+}
+
+Process Enfermera[id: 0 ... 2] {
+    int pasajeroActual;
+    
+    while (personasHisopadas < 150) {
+        P(hayPasajeroEsperandoHisopado[id]);  // espero a que haya un pasajero esperando en mi puesto
+	if (!puestosEnfermeras[id].isEmpty()) {
+            P(mutexPuestosEnfermeras[id]);
+            pasajeroActual = puestosEnfermeras[id].pop();
+            V(mutexPuestosEnfermeras[id]);
+            Hisopar(pasajeroActual);
+            P(mutexHisopados);
+            personasHisopadas++;  // aumento la cantidad de personas hisopadas
+            V(mutexHisopados);
+            V(esperarParaIrse[pasajeroActual]);  // aviso a pasajero que puede irse
+            P(hayPasajeroEsperandoHisopado[puestoDesignado]);  // espero a que haya un pasajero esperando en mi puesto
+        }
+    }
+}
+
+process PuestoConMenosPasajeros (){			//procedimiento que calcula cual es la fila con menos pasajeros
+	int min=999; int filaMinima=-1;	
+	p(mutexPuestosEnfermeras);
+	for (i=0, i<3, i++){
+		if(min<puestosEnfermeras[i].size()){
+			min=puestosEnfermeras[i].size();
+			filaMinima= i;
+		}
+	v(mutexPuestosEnfermeras);
+	return filaMinima;
+}
+
+
+**b)**
+
+ColaPasajeros puestos[3];
+sem chequearPuesto = 1; sem accesoPuestos[3] = ([3], 1); sem esperaPuestos[3] = ([3], 0); sem esperaSalir[150] = ([150], 0);
+int personasRepartidas = 0;
+
+Process Pasajero[id: 0 ... 149] {
+    int puestoDesignado;
+    P(chequearPuesto);
+    puestoDesignado = PuestoConMenosPasajeros();  // obtengo el puesto con menos pasajeros
+    P(accesoPuestos[puestoDesignado]);
+    puestos[puestoDesignado].push(id);  // me agrego a la cola de pasajeros del puesto designado
+    V(accesoPuestos[puestoDesignado]);
+    V(esperaPuestos[puestoDesignado]);  // aviso que hay un pasajero esperando
+    personasRepartidas++;  // aumento la cantidad de personas repartidas
+    if (personasRepartidas == 150) {
+        for i = 0; i < 3; i++) {
+            V(esperaPuestos[i]);  // aviso a las enfermeras que ya no hay más pasajeros
+        }
+    }
+    V(chequearPuesto);
+    P(esperaSalir[id]);  // espero a que me avisen que puedo irme
+}
+
+Process Enfermera[id: 0 ... 2] {
+    int pasajeroActual;
+    P(esperaPuestos[id]);  // espero a que haya un pasajero esperando en mi puesto
+    P(accesoPuestos[id]);
+    while (!puestos[id].isEmpty()) {
+        pasajeroActual = puestos[id].pop();
+        V(accesoPuestos[id]);
+        Hisopar(pasajeroActual);  // hisopo al pasajero
+        V(esperaSalir[pasajeroActual]);  // aviso a pasajero que puede irse
+        P(esperaPuestos[id]);  // espero a que haya un pasajero esperando en mi puesto
+        P(accesoPuestos[id]);
+    }
+    V(accesoPuestos[id]);
+}

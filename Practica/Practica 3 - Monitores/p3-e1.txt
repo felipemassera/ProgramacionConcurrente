@@ -1,0 +1,48 @@
+1.
+Se dispone de un puente por el cual puede pasar un solo auto a la vez.
+Un auto pide permiso para pasar por el puente, cruza por el mismo y luego sigue su camino.
+
+Monitor Puente
+	cond cola;
+	int cant= 0;
+	
+	Procedure entrarPuente ()
+		while ( cant > 0) wait (cola);
+		cant = cant + 1;
+	end;
+	Procedure salirPuente ()
+		cant = cant – 1;
+		signal(cola);
+	end;
+End Monitor;
+
+Process Auto [a:1..M]
+	Puente. entrarPuente (a);
+	“el auto cruza el puente”
+	Puente. salirPuente(a);
+End Process;
+
+a.
+¿El código funciona correctamente? Justifique su respuesta.
+#Si, el código funciona correctamente ya que al querer entrar un auto al puente, se llama al procedimiento entrarPuente()
+ y este se encarga de verificar si hay autos en el puente, si no hay autos en el puente, se incrementa la variable cant y,
+ si hay autos en el puente, se duerme al proceso hasta que el auto que está en el puente disminuya la variable cant y
+ despierte al primer proceso dormido en la cola de espera.
+b.
+¿Se podría simplificar el programa? ¿Sin monitor? ¿Menos procedimientos? ¿Sin variable condition? En caso afirmativo, rescriba el código.
+#Podríamos simplificarlo si el Monitor únicamente representa el cruce del puente y no la entrada y salida del mismo. Al hacer esto y gracias
+ a la exclusión mutua que garantizan los Monitores, podemos resolver el problema de la siguiente manera:
+
+Monitor Puente {
+    Procedure cruzarPuente() {
+        # El auto cruza el puente
+    }
+}
+
+Process Auto [a:1..M] {
+    Puente.cruzarPuente();
+}
+
+c.
+¿La solución original respeta el orden de llegada de los vehículos? Si rescribió el código en el punto b), ¿esa solución respeta el orden de llegada?
+#Ninguna de las dos soluciones respeta el orden de llegada de los vehículos. Esto se puede solucionar usando Passing the Condition.

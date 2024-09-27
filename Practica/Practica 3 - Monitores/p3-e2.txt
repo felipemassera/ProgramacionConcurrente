@@ -1,0 +1,32 @@
+2.
+Existen N procesos que deben leer información de una base de datos, la cual es administrada por un motor
+ que admite una cantidad limitada de consultas simultáneas.
+a)
+Analice el problema y defina qué procesos, recursos y monitores serán necesarios/convenientes,
+ además de las posibles sincronizaciones requeridas para resolver el problema.
+b)
+Implemente el acceso a la base por parte de los procesos, sabiendo que el motor de base de datos
+ puede atender a lo sumo 5 consultas de lectura simultáneas.
+
+
+process lectores [id:1..N]{
+	Monitor monitor;
+	monitor.solicitarIngreso();
+	/// usar BASE DATOS;
+	monitor.abandonarBD();
+}
+
+
+Monitor motor {
+	cond cola;
+	int cantConsultas = 5;
+	
+	process solicitarIngreso(){
+		while (cantidadConsultas==0) wait(cola);
+		cantConsultas = cantConsultas-1;
+	}
+	process abandonarBD(){
+		cantConsultas = cantConsultas+1;
+		signal(cola);
+	}
+}
