@@ -1,0 +1,71 @@
+6.Existe una comisión de 50 alumnos que deben realizar tareas de a pares,
+ las cuales son corregidas por un JTP. Cuando los alumnos llegan, forman una fila.
+  Una vez que están todos en fila, el JTP les asigna un número de grupo a cada uno. 
+  Para ello, suponga que existe una función AsignarNroGrupo() que retorna un número “aleatorio” del 1 al 25.
+  Cuando un alumno ha recibido su número de grupo, comienza a realizar su tarea. Al terminarla, el alumno le avisa
+al JTP y espera por su nota. Cuando los dos alumnos del grupo completaron la tarea, el JTP les asigna un puntaje
+(el primer grupo en terminar tendrá como nota 25, el segundo 24, y así sucesivamente hasta el último que tendrá nota 1).
+
+Nota: el JTP no guarda el número de grupo que le asigna a cada alumno.
+
+Monitor examen {
+    cond esperaJTP; cond esperaAlumno;cond esperaNota[25];
+    int cantAlumnos=0; int notaFinal=25;
+    int alumnoGrupo[50]= [(50)0];
+    int examenGrupo[25]= [(25)0];
+    int notas[25]= [(25)0];
+
+    procedure asignarGrupo(){
+        if (cantAlumnos<50){
+            wait(esperaJTP);
+        }
+        for (int i=1; i<50;i++){
+            alumnoGrupo[i]= AsignarNroGrupo();
+        }
+        signal_all(esperaAlumno);
+    }
+
+
+    procedure llegoExamen(){
+        cantAlumnos++;
+        if(cantAlumnos==50){
+            signal(esperaJTP);
+        }else{
+            wait(esperaAlumno)
+        }
+    }
+
+    procedure hagoExamen (id : in int){
+        Examen examen;
+        grupoExamen = alumnoGrupo[id];
+        //hago el examen
+        cola.push(grupoExamen);
+        signal(esperaJTP);
+        wait(esperaNota[grupoExamen]);
+    }
+
+    procedure corregir(){
+        if (cola.empty()){
+            wait(esperaJTP);
+        }
+        grupoExamen = cola.pop();
+        examenGrupo[grupoExamen]++;
+        if(examenGrupo[grupoExamen]==2){
+            notas[grupoExamen]= notaFinal;
+            notaFinal --;
+            signal_all(esperaNota[grupoExamen]);
+        }
+    }
+}
+
+procedure Alumno [id: 1..50]{
+    examen.llegaExamen();
+    examen.hagoExamen(id);
+}
+
+procedure JTP{
+    examen.asignarGrupo();
+    for (int i=1; i<25;i++){
+        examen.corregir();
+    }
+}

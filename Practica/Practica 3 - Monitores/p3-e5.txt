@@ -1,0 +1,234 @@
+5. En un corralón de materiales se deben atender a N clientes de acuerdo con el orden de llegada.
+    Cuando un cliente es llamado para ser atendido, entrega una lista con los productos que
+    comprará, y espera a que alguno de los empleados le entregue el comprobante de la compra
+    realizada.
+    
+a) Resuelva considerando que el corralón tiene un único empleado.
+Tareas son:
+        // llego al corralon
+        // se confecciona y entrega la lista de tareas al empleado
+        // el empleado prepara el pedido
+        // se emite ticket y se avisa al cliente que lo tiene
+        //el cliente se va.
+
+Monitor corralon{
+    cond enEspera; cond empleado; cond hayLista; cond hayComprobante; cond retiroComprobante;
+    int clienteEsperando=0;
+    listaMaterialesActual; comprobanteActual;
+    boolean empleadoLibre = true;
+    
+    procedure clienteSePresenta(listaMateriales: in lista){
+        clienteEsperando ++;                                            //si el empleado esta trabajando, lo espero hasta mi turno . 
+        signal(empleado);
+        wait(enEspera);
+        listaMaterialesActual = listaMateriales;                            //la lista de materiales actual= lista de clietne. 
+        signal(hayLista);                                                   //informo que hay lista
+    }
+
+    procedure atenderCliente(){                                             //vendedor si en algun momento no tiene cola de espera, se duerme  e informa que esta libre. 
+        if(clienteEsperando==0){
+            wait(empleado);
+        }
+        clienteEsperando--;                                                 //al ser despertado es por que llego un cliente nuevo.
+        signal(enEspera);
+        wait(hayLista);                                                     //me quedo esperando a que el cliente me de su lista de materiales.
+        comprobanteActual = generarComprobante(listaMaterialesActual);
+        signal(hayComprobante);                                             //informo al cliente que ya esta su tickey (para que se vaya)
+        wait(retiroComprobante);                                            // me quedo esperando que el cliente retire su ticket
+    }
+    procedure retiroComprobante(comprobante:OUT Comprobante){
+        wait(hayComprobante);                                               //espera al informe que esta el comprobante.
+        comprobante = comprobanteActual;                                    //lo extraigo
+        signal(retiroComprobante);                                          //lo saco y me retiro
+    }
+}
+
+process Cliente [1..n]{
+    Lista listaMateriales; comprobante;
+    corralon.clienteSePresenta(listaMateriales);            //cliente llega con la lista de listaMateriales
+    corralon.clienteRetirarComprobante(comprobante);        //cliente se retira con el ticket de la compra
+}
+
+process empleado{
+    for (int i=1; i<N; i++){
+        corralon.atenderCliente();                          //empleado atiende a los N clientes.
+    }
+}
+
+
+b) Resuelva considerando que el corralón tiene E empleados (E > 1). Los empleados no
+   deben terminar su ejecución.'
+Tareas son:
+        // llego al corralon
+        ** se asigna el vendedor
+        // se confecciona y entrega la lista de tareas al empleado
+        // el empleado prepara el pedido
+        // se emite ticket y se avisa al cliente que lo tiene
+        //el cliente se va.
+
+Monitor asignacionEmpleado{                             //monitor encargado de la gestion de empleados para los clientes que lo soliciten. 
+    int empleadosLibres = E; int clienteEsperando=0;
+    cond empleado; cond esperoEmpleado;
+    cola colaEmpleados<empleado> = [(E)idEmpleado];
+
+
+    procedure pedirEmpleado(idEmpleado: out int){       //retorna el id del empleado que atiende al cliente. 
+        if (empleadosLibres ==0){
+            clienteEsperando ++;
+            wait(esperoEmpleado);
+        }else{
+            empleadoLibre --;
+        }
+        idEmpleado= colaEmpleados.pop();
+    }
+
+    procedure proximoCliente(idEmpleado: in int){       //metodo que se encarga de que si un empleado termina de atender a un cliente, siga por el proximo. 
+        colaEmpleados.push(idEmpleado);
+        if(clienteEsperando==0){
+            empleadosLibres ++;                        //si no hay clientes esperando, el empleado queda libre.
+        }else{
+            clienteEsperando--;
+            signal(esperoEmpleado);
+        }
+    }
+}
+
+monitor corralon [id: 1..E]{
+    cond enEspera; cond empleado; cond hayLista; cond hayComprobante; cond retiroComprobante;
+    boolean clienteEsperando= false;
+    listaMaterialesActual; comprobanteActual;
+    boolean empleadoLibre = true;
+    
+    procedure clienteSePresenta(listaMateriales: in lista,comprobante:OUT Comprobante){
+        clienteEsperando= true;                                            //si el empleado esta trabajando, lo espero hasta mi turno . 
+        signal(empleado);
+        wait(enEspera);
+        listaMaterialesActual = listaMateriales;                            //la lista de materiales actual= lista de clietne. 
+        signal(hayLista);                                                   //informo que hay lista
+        wait(hayComprobante);                                               //espera al informe que esta el comprobante.
+        comprobante = comprobanteActual;                                    //lo extraigo
+        signal(retiroComprobante);                                          //lo saco y me retiro
+    }
+
+    procedure atenderCliente(){                                             //vendedor si en algun momento no tiene cola de espera, se duerme  e informa que esta libre. 
+        if(! clienteEsperando ){
+            wait(empleado);
+        }
+        clienteEsperando=false;
+        signal(enEspera);
+        wait(hayLista);                                                     //me quedo esperando a que el cliente me de su lista de materiales.
+        comprobanteActual = generarComprobante(listaMaterialesActual);
+        signal(hayComprobante);                                             //informo al cliente que ya esta su tickey (para que se vaya)
+        wait(retiroComprobante);                                            // me quedo esperando que el cliente retire su ticket
+    }
+}
+
+process Cliente [id: 1..N]{
+    int idEmpleado;
+    listaMateriales; comprobante.
+    asignacionEmpleado. pedirEmpleado(idEmpleado);
+    corralon[idEmpleado].clienteSePresenta(listaMateriales, Comprobante);
+}
+   
+process empleado [id: 1..E]{
+    while(true){
+        asignacionEmpleado.proximoCliente(id);
+        corralon.atenderCliente();
+    }
+}   
+
+c) Modifique la solución (b) considerando que los empleados deben terminar su ejecución
+    cuando se hayan atendido todos los clientes.
+Tareas son:
+        // llego al corralon
+        // se asigna el vendedor
+        // se confecciona y entrega la lista de tareas al empleado
+        // el empleado prepara el pedido
+        // se emite ticket y se avisa al cliente que lo tiene
+        //el cliente se va.
+        ** si no hay mas clientes se termina el programa por parte d elos empleados. 
+
+Monitor asignacionEmpleado{                             //monitor encargado de la gestion de empleados para los clientes que lo soliciten. 
+    int empleadosLibres = E; int clienteEsperando=0;
+    int clientesFaltantes = N;
+    cond empleado; cond esperoEmpleado;
+    cola colaEmpleados<empleado> = [(E)idEmpleado];
+
+
+    procedure pedirEmpleado(idEmpleado: out int){       //retorna el id del empleado que atiende al cliente. 
+        if (empleadosLibres ==0){
+            clienteEsperando ++;
+            wait(esperoEmpleado);
+        }else{
+            empleadoLibre --;
+        }
+        idEmpleado= colaEmpleados.pop();
+    }
+
+    procedure proximoCliente(idEmpleado: in int; termino: OUT bool){       //metodo que se encarga de que si un empleado termina de atender a un cliente, siga por el proximo. 
+        if (clientesFaltantes>0){           //si la cantidad de clientes faltantes es mayor que la cola+1;
+            colaEmpleados.push(idEmpleado);
+            termino =false;
+            clientesFaltantes--;
+            if(clienteEsperando==0){
+                empleadosLibres ++;                        //si no hay clientes esperando, el empleado queda libre.
+            }else{
+                clienteEsperando--;
+                signal(esperoEmpleado);
+            }
+        }else{
+            termino=true;
+        }
+    }
+}
+
+monitor corralon [id: 1..E]{
+    cond enEspera; cond empleado; cond hayLista; cond hayComprobante; cond retiroComprobante;
+    boolean clienteEsperando= false;
+    listaMaterialesActual; comprobanteActual;
+    boolean empleadoLibre = true;
+    
+    procedure clienteSePresenta(listaMateriales: in lista,comprobante:OUT Comprobante){
+        clienteEsperando= true;                                            //si el empleado esta trabajando, lo espero hasta mi turno . 
+        signal(empleado);
+        wait(enEspera);
+        listaMaterialesActual = listaMateriales;                            //la lista de materiales actual= lista de clietne. 
+        signal(hayLista);                                                   //informo que hay lista
+        wait(hayComprobante);                                               //espera al informe que esta el comprobante.
+        comprobante = comprobanteActual;                                    //lo extraigo
+        signal(retiroComprobante);                                          //lo saco y me retiro
+    }
+
+    procedure atenderCliente(){                                             //vendedor si en algun momento no tiene cola de espera, se duerme  e informa que esta libre. 
+        if(! clienteEsperando ){
+            wait(empleado);
+        }
+        clienteEsperando=false;
+        signal(enEspera);
+        wait(hayLista);                                                     //me quedo esperando a que el cliente me de su lista de materiales.
+        comprobanteActual = generarComprobante(listaMaterialesActual);
+        signal(hayComprobante);                                             //informo al cliente que ya esta su tickey (para que se vaya)
+        wait(retiroComprobante);                                            // me quedo esperando que el cliente retire su ticket
+    }
+}
+
+Monitor
+
+process Cliente [id: 1..N]{
+    int idEmpleado;
+    listaMateriales; comprobante.
+    asignacionEmpleado. pedirEmpleado(idEmpleado);
+    corralon[idEmpleado].clienteSePresenta(listaMateriales, Comprobante);
+}
+   
+process empleado [id: 1..E]{
+    boolean termino=false;
+    while(!termino){
+        asignacionEmpleado.proximoCliente(id, termino);
+        if(!termino){
+            corralon.atenderCliente();
+            contador.agregarCLiente(faltanClientes);
+        }
+    }
+
+}

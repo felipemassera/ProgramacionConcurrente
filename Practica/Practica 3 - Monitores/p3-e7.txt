@@ -1,0 +1,75 @@
+7.Se debe simular una maratón con C corredores donde en la llegada hay UNA máquina expendedoras de agua
+ con capacidad para 20 botellas. Además, existe un repositor encargado de reponer las botellas de la máquina.
+ Cuando los C corredores han llegado al inicio comienza la carrera. Cuando un corredor termina la carrera se 
+ dirigen a la máquina expendedora, espera su turno (respetando el orden de llegada), saca una botella y se retira.
+ Si encuentra la máquina sin botellas, le avisa al repositor para que cargue nuevamente la máquina con 20 botellas;
+ espera a que se haga la recarga; saca una botella y se retira. Nota: mientras se reponen las botellas se debe permitir
+ que otros corredores se encolen.
+
+ process repositor{
+    while (true){
+        maquina.reponerBotellas();
+    }
+ }
+ process corredor[id: 1..C]{
+    carrera.llegue();
+    carrera.finCarrera();
+    maquina.tomarBotella();
+    carrera.avisarSiguiente();
+ }
+
+ Monitor carrera{
+    cond esperaLargada; cond finCarrera;cond esperandoMaquina;
+    int cantCorredores =0;
+    int cantEsperandoMaquina=0;
+    bool maquinaLibre=true;
+
+    procedure llegue(){
+        cantCorredores ++;
+        if(cantCorredores == C){
+            signal_all(esperaLargada);
+        }else{
+            wait(esperaLargada);
+        }
+    }
+
+    procedure finCarrera(){
+        if (maquinaLibre){
+            maquinaLibre=false;
+        }else{
+            cantEsperandoMaquina ++;
+            wait(esperandoMaquina);
+        }
+    }
+    procedure avisarSiguiente(){
+        if(cantEsperandoMaquina==0){
+            maquinaLibre = true;
+        }else{
+            cantEsperandoMaquina--;
+            signal(esperandoMaquina);
+        }
+    }
+}
+Monitor maquina{
+    cond esperarReposicion;cond repositor;
+    int totalBotellas=0; int botellasMaquina=20;
+    int cantCorredores=C; boolean finCarrera=false;
+    
+    procedure tomarBotella(){
+        if(botellasMaquina==0){
+            signal(empleado);
+            wait(esperarReposicion);
+        }
+            botellasMaquina--;
+            totalBotellas++;
+    }
+
+    procedure reponerBotellas(){
+        if(botellasMaquina>0){
+            wait(empleado);
+        }
+        botellasMaquina=20;
+        signal(esperarRepocision);
+    }
+} 
+
