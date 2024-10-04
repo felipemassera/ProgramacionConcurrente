@@ -6,31 +6,63 @@ a ella. Cuando los 10 jugadores del partido llegaron a la cancha comienza el par
  todos los jugadores del partido se retiran (no es necesario que se esperen para salir).
 
  process Jugadores[id: 1..20]{
-    int idCancha=-1;
-    cancha.anunciarse(idCancha);
-    cancha.jugarPartido(idCancha);
+    int nEquipo=?;
+    int numeroC=-1;
+    Equipo[nEquipo].llegada(numeroC);
+    Cancha[nCancha].llegada();
  }
+process partido[id: 1..2]{
+    Cancha[id].iniciar();
+    delay(90minutos);
+    Cancha[id].terminar();
+}
+Monitor Equipo[id: 1..4]{
+    int cant=0; int numCancha=-1;
+    cond Espera;
 
-
-Monitor cancha{
-    cond esperando[4];
-    int esperandoJugadores[4]=[(4)0];
-    int equipoCancha[2]=[(2)0];
-    idCancha =1;
-
-    procedure anunciarse(Cancha=out int){
-        int nroEquipo = DarEquipo();
-
-        esperandoJugadores[nroEquipo]++;
-        if (esperandoJugadores[nroEquipo] <5){
-            c
-            equipoCancha[idCancha]++;
-            if (equipoCancha[idCancha] ==2){
-                cancha= idCancha;
-                idcancha ++;
-            }
+    procedures llegada(numeroC: out int){
+        int numeroCancha=-1;
+        cant++;
+        if (cant<5){
+            wait(espera);
+        }else{
+            Admin.solicitarCancha(numeroCancha);
+            signal_all(espera);
         }
+        numeroC=numeroCancha;
+    }
+}
+Monitor Admin(){
+    int cant =0;
+    procedure solicitarCancha (numeroCancha: OUT ){
+        cant++;
+        if (cant<3){
+            numeroCancha=1;
+        }else{
+            numeroCancha=2;
+        }
+    }
+}
 
+Monitor Cancha{
+    cond esperal, cond inicio;
+    int cant=0;
+    
+    procedure llegada(){
+        cant++;
+        if (cant ==10){
+            signal(inicio);
+        }
+        wait(espera);
+    }
+
+    procedure iniciar(){
+        if (cant <10){
+            wait(inicio);
+        }
+    }
+    procedure Terminar(){
+        signal_all(espera)
     }
 }
 
