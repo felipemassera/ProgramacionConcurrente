@@ -3,3 +3,10 @@ mi tema era
 2- variables de los pthreads y como simular un monitor
 3- explicar q hacia un broadcast de mpi con 8 procesos a los q se le mandaba un número 
 4- hacer un heartbeat de una matriz nxn para calcular la esquina con mayor cantidad de autos y la esquina con menor cantidad de motos
+
+
+
+1- los 4 características de la sección critica, los algoritmos ticket, bakery y tie breaker y cuales eran las ventajas de estos contra los spin locks
+2- variables de los pthreads y como simular un monitor
+3- explicar q hacia un broadcast de mpi con 8 procesos a los q se le mandaba un número 
+4- hacer un heartbeat de una matriz nxn para calcular la esquina con mayor cantidad de autos y la esquina con menor cantidad de motos
