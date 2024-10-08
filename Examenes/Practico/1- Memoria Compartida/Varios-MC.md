@@ -7,7 +7,7 @@ sem esperaCoord=0; int comprobante[150]=([150]0); sem mutexContador;
 int irFila[150]=([150]0); int totalFinalizados=0; int contador[7]=([7]0);
 
 process coordinador{
-    for (int i=1;i<150;i++){
+    for (int i=1;i<=150;i++){
         p(esperaCoord);                         //avisa al coord que hay auto en espera.
         p(mutexColaEntrada);                    
         vehiculo= colaEntrada.pop();
@@ -197,7 +197,7 @@ Process empleado[1..50]{
     llegada++;
     if (llegada mod 5 ==0){
         v(mutexLlegada);
-        for (i=1;i<5;i++){
+        for (i=1;i<=5;i++){
             v(barrera[miGrupo]);
         }
     }else{
@@ -338,7 +338,7 @@ process vehiculo[id:1..15]{
     p(mutexCantBarrera);
     cantBarrera++;
     if (cantBarrera==15){
-        for (i=1;i<15;i++){
+        for (i=1;i<=15;i++){
             v(barrera);
         }
     }
@@ -419,7 +419,7 @@ Monitor monitor{
         }
     }
     procedure aumentarPrioridad(){
-        for (i=1;i<cantEspera;i++){
+        for (i=1;i<=cantEspera;i++){
             id,prioridad= colaEspera.pop();
             prioridad++;
             colaEspera.insertarOrdenado(id,prioridad);
@@ -582,7 +582,250 @@ Monitor consultorio[id:1..2]{
 
 }
 ```
-    procedure liberar(){
-        signal(fin);
+6. SEMAFOROS Una empresa de turismo posee 4 combis con capacidad para 25 personas cada una y UN
+vendedor que vende los pasajes a los clientes de acuerdo al orden de llegada. Hay C clientes
+que al llegar intentan comprar un pasaje para una combi en particular (el cliente conoce este
+dato); si aún hay lugar en la combi seleccionada se le da el pasaje y se dirige hacia la combi;
+en caso contrario se retira. Cada combi espera a que suban los 25 pasajeros, luego realiza el
+viaje, y cuando llega al destino deja bajar a todos los pasajeros. Nota: maximizar la
+concurrencia; suponga que para cada combi al menos 25 clientes intentarán comprar pasaje.
+```c
+    sem boleteria=0; mutexColaBoleteria=1; esperaCombi[C]=([C]0);esperaEntrada[C]=([C]0); finViaje[4]=([4]0)
+    cola colaBoleteria;
+    boolean entrada[C]=([C]false);
+
+    process combi[id:1..4]{
+        for (i=1;i<=25;i++){
+            p(esperaCombi[id]);
+        }
+        delay(Tiempo del viaje);
+        for (i=1;i<=25;i++){
+            v(finViaje[id]);
+        }
     }
-        wait(fin);         //finaliza atencion
+    process vendedor{
+        int ticket[4]=([4]25);;int id,nroCombi;
+        while(true){
+            p(boleteria);
+            p(mutexColaBoleteria);
+            id,nroCombi= colaBoleteria.pop()
+            v(mutexColaBoleteria);
+            if(ticket[nroCombi]>0){
+                ticket[nroCombi]--;
+                entrada[id]=true;
+            }else{
+                entrada[id]=false;
+            }
+
+        }
+    }
+    process cliente[id:1..C]{
+        int nroCombi= ..;
+        p(mutexColaBoleteria);
+        colaBoleteria.push(id,nroCombi);
+        v(mutexColaBoleteria);
+        v(boleteria);
+        p(esperaEntrada[id]);
+        if(entrada[id]){
+            v(esperaCombi[nroCombi]);
+            p(finViaje[nroCombi]);
+        }
+        //se retira
+    }
+
+```
+7. SEMAFOROS En una herrería hay 15 empleados que forman 5 grupos de 3 personas; los grupos se forman
+de acuerdo al orden de llegada (los 3 primeros pertenecen al grupo 1, los 3 siguientes al grupo
+2, y así sucesivamente). Ni bien conoce el grupo al que pertenece el empleado comienza a
+trabajar (no debe esperar al resto de grupo para comenzar). Cada grupo debe hacer
+exactamente P unidades de un producto (cada unidad es hecha por un único empleado). Al
+terminar de hacer las P unidades de un grupo, sus 3 empleados se retiran. Nota: maximizar
+la concurrencia; ningún grupo puede hacer unidades de más.
+```c
+int nGrupo=1; int piezas[5]=([5]P);int termine[5]=([5]0); int cantEmpleado=1;
+sem mutexPiezas[5]=([5]1); sem mutexCantEmpledo=1; sem mutexTermine[5]=([5]1); sem barreraIrse[5]=([5]0); 
+
+process empleado[id 1..15]{
+    int nroGrupo=..;
+    p(mutexCantEmpledo);
+    nroGrupo= cantEmpleado div 3;
+    cantEmpleado++;
+    v(mutexCantEmpledo);
+    p(mutexPiezas[nroGrupo]);
+    while (piezas[nroGrupo]>0){
+        piezas[nroGrupo]--;
+        v(mutexPiezas[nroGrupo]);
+        //hago piezas
+        p(mutexPiezas[nroGrupo]);
+    }
+    v(mutexPiezas[nroGrupo]);
+    p(mutexTermine[nroGrupo]);
+    termine[nrogrupo]++;
+    if(termine[nrogrupo]==3){
+        for (i=1;i<=3;i++){
+            v(barreraIrse[nroGrupo]);
+        }
+    }
+    v(mutexTermine[nroGrupo]);
+    p(barreraIrse[nroGrupo];
+    }
+```
+
+Resolver con SEMÁFOROS el siguiente problema. Simular un examen técnico para concursos Nodocentes en la Facultad, en el mismo participan 100 personas distribuidas en 4 concursos (25 personas en cada concurso) con un coordinador en cada una de ellos. Cada persona ya conoce en que concurso participa. El coordinador de cada concurso espera hasta que lleguen las 25 personas correspondientes al mismo, les entrega el examen a resolver (el mismo para todos los de ese concurso), y luego corrige los exámenes de esas 25 personas de acuerdo al orden en que van entregando. Cada persona al llegar debe esperar a que su coordinador (el que corresponde a su concurso) le dé el examen, lo resuelve, lo entrega para que su coordinador lo evalúe y espera hasta que le deje la nota para luego retirarse. Nota: maximizar la concurrencia; sólo usar los procesos que representes a las personas y a los coordinadores; todos los procesos deben terminar.
+```c
+sem barrera[4]=([4]0),mutexColaExamen[4]=([4]1), coordinador[4]=([4]0), esperoNota[4]=([4]0);mutexCont[4]=([4]1);
+cola colaExamen[4];
+int examen[100]=([100]0), cont[4]=([4]0);
+
+process persona[id: 1..100]{
+    concurso=..;
+    p(mutexCont[concurso]);
+    cont[concurso]++;
+    v(mutexCont[concurso]);
+    if(cont[concurso]==25){
+        v(coordinador[concurso]);
+    }
+    p(barrera[concurso]);       //barrera
+    int examen= examen[concurso];
+    hacer(examen);
+    p(mutexColaExamen[concurso]);
+    colaExamen[concurso].push(id,examen);
+    v(mutexColaExamen[concurso]);
+    v(coordinador[concurso]);
+    p(esperoNota[id]);
+    nota=examen[id];
+    //me fui
+}
+process coordinador[id:1..4]{
+    p(coordinador[concurso]);
+    examen[id]= new examen();
+    for (i=1;i<=25;i++){
+        v(barrera[concurso])
+    }
+    for (i=1;i<=25;i++){
+        p(coordinador[concurso]);
+        p(mutexColaExamen[concurso]);
+        id,examen= colaExamen[concurso].pop();
+        v(mutexColaExamen[concurso]);
+        examen[id]= corregir(examen);
+        v(esperoNota[id]);
+    }
+}
+```
+
+4.Monitores En una mesa de exámenes hay 3 profesores que les deben tomar un examen oral a 30 alumnos
+de acuerdo al orden de llegada. Cada examen es tomado por un único profesor. Cuando un
+alumno llega, espera a que alguno de los profesores (cualquiera) lo llame y se dirige al
+escritorio correspondiente a ese profesor, donde le tomará el examen; al terminar el
+profesor le da la nota y el alumno se retira. Cuando un profesor está libre llama al siguiente
+alumno. Nota: todos los procesos deben terminar su ejecución.
+```c
+process profesor[id:1..3]{
+    boolean hayAlumno=true;
+    acceso.siguiente(id,hayAlumno);
+    while (hayAlumno){
+        escritorio.siguiente();
+        int nota= tomarOral();
+        escritorio.darNota(nota);
+        acceso.siguiente(id,hayAlumno);
+    }
+}
+process alumno[id:1..30]{
+    int nProf; nota;
+    acceso.llego(id,nProf);
+    escritorio[nProf].darExamen(nota);
+}
+Monitor acceso{
+    cond espera,profesor;
+    cola cola;
+    int canSiguientesProfe=30; profesor[30]=([30]0);
+
+    procedure llego(id:in int; nProf: out int){
+        cola.push(id);
+        signal(profesor);
+        wait(espera);
+        nprof=profesor[id];
+    }
+    procedure siguiente(idProf:in int;hayAlumno:out boolean){
+        int idAlumno;
+        if(canSiguientesProfe>0)
+            canSiguientesProfe--;
+            if(cola.empty())){
+                wait(profesor)
+            }
+            idAlumno=cola.pop();
+            profesor[idAlumno]=idProf;
+            signal(espera);
+        }else{
+            hayAlumno=false;
+        }
+    }
+}
+monitor escritorio[id: 1..3]{
+    boolean libre=true;
+    int notaAct;
+    cond esperar, fin, profesor;
+
+    procedure darExamen(notaFinal:out int){
+        libre=false;
+        signal(profesor)
+        wait(esperar);
+        notafinal= notaAct;
+        signal(fin)
+    }
+    procedure siguiente(){
+        if(libre){
+            wait(profesor);
+        }
+    }
+    procedure darExamen(nota: in int){
+        notaAct=nota;
+        signal (esperar);
+        wait(fin)
+    }
+}
+```
+
+6. Monitores En una playa hay 5 equipos de 4 personas cada uno (en total son 20 personas donde cada
+una conoce previamente a que equipo pertenece). Cuando las personas van llegando
+esperan con los de su equipo hasta que el mismo esté completo (hayan llegado los 4
+integrantes), a partir de ese momento el equipo comienza a jugar. El juego consiste en que
+cada integrante del grupo junta 15 monedas de a una en una playa (las monedas pueden ser
+de 1, 2 o 5 pesos) y se suman los montos de las 60 monedas conseguidas en el grupo. Al
+finalizar cada persona debe conocer el monto total juntado por su grupo. Nota: maximizar
+la concurrencia. Suponga que para simular la búsqueda de una moneda por parte de una
+persona existe una función Moneda() que retorna el valor de la moneda encontrada
+```c
+process Jugadores[id:1..20]{
+    equipo=..; int totalGrupo=0;
+    juego[equipo].llego();
+    for (i=1;i<=15;i++){
+        total+=Moneda();
+    }
+    juego[equipo].terminar(totalMio,totalGrupo);
+}
+Monitor juego[id:1..4]{
+    int cont=0; int totalEquipo=0;
+
+    procedure llego(){
+        cont++;
+        if(cont==4){
+            signal_all(espera);
+        }else{
+            wait(espera);
+        }
+    }
+
+    procedure terminar(total:in int; totalE:out int){
+        totalEquipo+=total;
+        cont--;
+        if(cont==0){
+            signal_all(espera);
+        }else{
+            wait(espera);
+        }
+        totalE=totalEquipo;
+    }
+}
+
+```
