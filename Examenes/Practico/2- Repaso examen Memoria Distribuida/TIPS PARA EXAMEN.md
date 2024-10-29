@@ -16,6 +16,7 @@ TENER EN CUENTA DECLARAR LOS CANALES "CHAN ..."
 ### Usar bien las prioridades usando colas, conjuntamente con los mensajes solicitados
 ### Maximizar concurrencia=USAR INTERMEDIOS Y AVECES NO
 
+//cuando hay un solo grupo de procesos que tienen que compartir un recurso, lo que hay que hacer es usar un ADMIN que administre el passing the condition;
 
 # ADA
 ## tips parcial

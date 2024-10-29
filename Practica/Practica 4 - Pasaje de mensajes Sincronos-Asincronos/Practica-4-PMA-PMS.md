@@ -463,7 +463,7 @@ c) Modifique  el  inciso  (b)  para  que  el  Analizador  resuelva  los  pedidos
 
 ```cpp
 process Robot[id:1..R]{
-    String url;
+    String urlVirus;
     while(true){
         urlVirus = analizar();
         Admin!aviso(urlVirus);              //encruentro una pag rari y se la mando al coord para que la mande a analizar.
@@ -684,10 +684,13 @@ procces Persona[id: 1..P]{
     //USO EL SIMULADOR UN "RATO"
     Empleado!fin();
 }
-process Admin{
+
+process Admin{                                                                                  //prestar atencion
     cola colaEspera; int cant=0;
     do{
-        (cant<P) Persona[*]!solicitarUso(id)->cant++; colaEspera.push(id);
+        (cant<P) Persona[*]!solicitarUso(id)->
+            cant++;
+            colaEspera.push(id);
         (!colaEspera.empty()) Empleado?solicitarPersona()-> Empleado!siguiente(colaEspera.pop());
     }od
 }
