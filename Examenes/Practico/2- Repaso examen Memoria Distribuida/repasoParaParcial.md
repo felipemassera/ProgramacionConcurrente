@@ -89,8 +89,8 @@ process admin{                                                           //manej
             }
     }od
 }
-
 ```
+
 3) Resolver el siguiente problema  con PMA. En  un  negocio de cobros digitales hay P personas que 
 deben  pasar  por  la  única  caja  de  cobros  para  realizar  el  pago  de  sus  boletas.  Las  personas  son 
 atendidas de acuerdo con el orden de llegada, teniendo prioridad aquellos que deben pagar menos 
@@ -250,18 +250,68 @@ Begin
     null;
 END Negocio;
 ```
-6) Resolver el siguiente problema. La oficina central de una empresa de venta de indumentaria debe 
+6) Resolver el siguiente problema. La oficina *central* de una empresa de venta de indumentaria debe 
 calcular cuántas veces fue vendido cada uno de los artículos de su catálogo. La empresa se compone 
-de 100 sucursales y cada una de ellas maneja su propia base de datos de ventas. La oficina central 
-cuenta con una herramienta que funciona de la siguiente manera: ante la consulta realizada para un 
-artículo determinado, la herramienta envía el identificador del artículo a las sucursales, para que cada 
-una  calcule  cuántas  veces  fue  vendido  en  ella.  Al  final  del  procesamiento,  la  herramienta  debe 
-conocer cuántas veces fue vendido en total, considerando todas las sucursales. Cuando ha terminado 
-de procesar un artículo  comienza con  el siguiente (suponga que la herramienta tiene una función 
-generarArtículo()  que  retorna el  siguiente  ID  a  consultar).  Nota:  maximizar  la  concurrencia.  Existe 
-una  función  ObtenerVentas(ID)  que  retorna  la  cantidad  de  veces  que  fue  vendido  el  artículo  con 
-identificador ID en la base de la sucursal que la llama. 
-```sh
+de *100 sucursales* y cada una de ellas maneja su propia base de datos de ventas. La oficina central 
+cuenta con una herramienta que funciona de la siguiente manera:
+- Ante la consulta realizada para un artículo determinado, la herramienta envía el identificador del artículo a las sucursales, para que cada 
+una  calcule  cuántas  veces  fue  vendido  en  ella.
+- Al  final  del  procesamiento,  la  herramienta  debe conocer cuántas veces fue vendido en total, considerando todas las sucursales. 
+- Cuando ha terminado de procesar un artículo  comienza con  el siguiente (suponga que la herramienta tiene una función 
+generarArtículo()  que  retorna el  siguiente  ID  a  consultar).
 
+  Nota:  maximizar  la  concurrencia.  Existe una  función  ObtenerVentas(ID)  que  retorna  la  cantidad  de  veces  que  fue  vendido  el  artículo  con 
+identificador ID en la base de la sucursal que la llama. 
+
+```sh
+procedure Oficina is
+
+task central is                                                 //LA CENTRAL ES LA ENCARGADA DE REPARTIR LOS IDS DE LOS PRODUCTOS, PARA ELLO LA ESTRATEGIA DE ESPERAR QUE UN SERVIDOR
+    ENTRY servidorLibre(idp: OUT integer);                          SE DECLARE LIBRE ES UNA BUENA OPCION, LUEGO ACUMULAR LOS RESULTADOS Y POR ULTIMO REINICIAR EL CICLO PARA QUE LOS SERVIDORES PUEDAN 
+    ENTRY resultadoBusqueda(cant: IN Integer);                      REINICIAR LAS BUSQUEDAS CON OTRO ID
+    ENTRY finVuelta();
+
+TASK TYPE sucursal; 
+
+sucursales: Array (1..100) of sucursal;
+
+TASK BODY Central is
+    totalProducto, idP: Integer;
+    
+Begin
+    LOOP
+        totalProducto = 0;
+        idP = generarArtículo();
+        for i in 1..200 LOOP                            // tener en cuenta que espera 100 res y hace 100 envios de id.
+            Select
+                ACCEPT servidorLibre(idProd: OUT integer)do
+                    idProd = idP;
+                END ACCEPT;
+            OR
+                ACCEPT resultadoBusqueda(cant: IN Integer) do
+                    totalProducto = totalProducto + cant;
+                END ACCEPT;
+        END LOOP;
+        for i in 1..100 LOOP
+            ACCEPT finVuelta();
+        END LOOP;
+        Print ("Producto ID:", idP , " ventas totales: ", totalProducto);       //imprimo en pantalla.
+    END LOOP;
+END BODY;
+
+TASK BODY Sucursal is
+    BD: Base Datos;
+Begin
+    LOOP
+        central.servidorLibre(idP);
+        total=ObtenerVentas(idp);
+        central.resultadoBusqueda(total);
+        central.finVuelta;
+    END LOOP;
+END BODY;
+
+Begin
+    null;
+end Oficina;
 ```
  
