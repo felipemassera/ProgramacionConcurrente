@@ -115,14 +115,12 @@ ASINCRÓNICO (PMA).
 chan enviarDoc(int, Object);
 chan impresoraLibre(int);
 chan imprimirDoc[5](int, Object);
-chan recibirImpresion[100](Object);
 
 Process empleado[id: 1..100] {
     Object impresion;
     while(true){
         //realiza trabajos;
-        send enviarDoc(id, new Documento());
-        receive recibirImpresion(impresion);
+        send enviarDoc(new Documento());
     }
 }
 
@@ -133,7 +131,6 @@ process impresora[id : 1..5]{
         send impresoraLibre(id);
         receive imprimirDoc(idP,documento);
         impresion= imprimir(documento);
-        send recibirImpresion[idP](impresion);
     }
 }
 process admin {
@@ -161,10 +158,15 @@ Process empleado[id: 1..100] {
 process impresora[id : 1..5]{
     integer idp; 
     Object documento, impresion;
-    while(true){
+    boolean seguir=true;
+    whiles(seguir){
         admin!impresoraLibre(id);
-        admin?imprimirDoc(idP,documento);
-        impresion= imprimir(documento);
+        admin?imprimirDoc(documento);
+        if(documento!=NULL)
+            impresion= imprimir(documento);
+        }else{
+             seguir=false
+        }  
     }
 }
 process admin {
@@ -172,14 +174,18 @@ process admin {
     Object documento;
     colaEspera: cola;
     do
-        ()receive enviarDoc(idE,documento); -> colaEspera.push(documento);
-        ()!colaEspera.empy(); impresora[*]?impresoraLibre(idImp) -> impresora[idImp]imprimirDoc(colaEspera.pop());
+        [] empleado[*]?enviarDoc(idE,documento); -> colaEspera.push(documento);
+        [] !colaEspera.empy(); impresora[*]?impresoraLibre(idImp) -> impresora[idImp]imprimirDoc(colaEspera.pop());
     od
+    for (i=1;i<=5;i++){
+         impresora[*]?impresoraLibre(idImp)
+         impresora[idImp]imprimirDoc(NULL);
+    }
 }
 ```
 
 ## ADA
-5)  Resuelva con ADA el siguiente problema: la página web del Banco Central exhibe las diferentes cotizaciones del dólar 
+5)  Resuelva con ADA el siguiente problema: la página web del Banco *Central* exhibe las diferentes cotizaciones del dólar 
 oficial de 20 bancos del país, tanto para la compra como para la venta. Existe una *tarea programada* que se ocupa de 
 actualizar la página en forma periódica y para ello consulta  la cotización de  cada uno de  los 20 bancos. Cada banco 
 dispone  de  una  API,  cuya  única  función  es  procesar  las  solicitudes  de  aplicaciones  externas.  
@@ -379,20 +385,20 @@ process CLiente[id:1..20]{
     usarTirolesa();
     guia!liberar();
 }
-process empleado{               
+process guia{               
     for(i=1;i<=20;i++){         
         coord!empleadoLibre();  
-        coord!siguiente(id);    
+        coord?siguiente(id);    
         Cliente[id]!acceder();  
         Cliente[id]?liberar();  
     }                           
 }                               
-process guia{                   
+process coordinador{                   
     int cant=0; Cola cola;
     DO
-        ()cant<20; cliente[x]?solicitarUso(id)->
+        () cant<20; cliente[*]?solicitarUso(id)->
             cola.push(id); cant++;
-        ()!cola.empty(); guia?guiaLibre()->
+        () !cola.empty(); guia?guiaLibre()->
             guia!siguiente(cola.pop());
     OD
 }
@@ -468,7 +474,7 @@ END NEGOCIO;
 
 ### PMA
 10. Resolver con PASAJE DE MENSAJES ASINCRÓNICO (PMA) el siguiente problema. En un negocio de cobros digitales 
-hay P personas que deben pasar por la única caja de cobros para realizar el pago de sus boletas. Las personas son 
+hay *P personas* que deben pasar por la única *caja* de cobros para realizar el pago de sus boletas. Las personas son 
 atendidas de acuerdo con el orden de llegada, teniendo prioridad aquellos que deben pagar menos de *5 boletas* de 
 los que pagan más. Adicionalmente, las personas embarazadas tienen prioridad sobre los dos casos anteriores. Las 
 personas entregan sus boletas al cajero y el dinero de pago; el cajero les devuelve el vuelto y los recibos de pago.
@@ -515,8 +521,8 @@ procedure empleado{
 ```
 
 ### ADA                 YA LO HICE
-11) Resolver con  ADA el siguiente problema. La oficina central de  una empresa de  venta de  indumentaria debe calcular 
-cuántas  veces  fue  vendido  cada  uno  de  los  artículos de  su  catálogo. La empresa  se  compone  de  100  sucursales y  cada 
+11) Resolver con  ADA el siguiente problema. La oficina *central* de  una empresa de  venta de  indumentaria debe calcular 
+cuántas  veces  fue  vendido  cada  uno  de  los  artículos de  su  catálogo. La empresa  se  compone  de  *100  sucursales* y  cada 
 una de ellas maneja su propia base de datos de ventas. La oficina central cuenta con una herramienta que funciona de la 
 siguiente  manera:  ante  la  consulta  realizada  para  un  artículo  determinado,  la  herramienta  envía  el  identificador  del 
 artículo a cada una de las sucursales, para que cada uno de éstas calcule cuántas veces fue vendido en ella. Al final del 
@@ -526,6 +532,38 @@ generarArtículo  que  retorna  el  siguiente  ID  a  consultar).  Nota:  maximi
 función  ObtenerVentas(ID) que  retorna la cantidad de veces  que fue vendido el artículo con identificador ID en la base 
 de datos de la sucursal que la llama.
 ```SH
+
+task body central
+
+    loop
+        modelo= QUEMODELO()
+        for i in 1..200 loop
+            select 
+                ACCEPT servLibre(mod:out integer) do
+                    mod=modelo;
+                end servlibre
+            or
+                ACCEPT Resultado(cant): in integer) do
+                    total= total+cant;
+                end resultado;
+            end select
+        end loop;
+        print("modelo:"+ modelo+ "cantidad: " + total)
+        for i in 1..100 loop
+            ACCEPT FINVUELTA();
+        endLOOP
+
+    end loop;
+end central
+task sede
+    loop
+        central.servLibre(modelo)
+        cant= sumar(modelo);
+        central.resultado(cant)
+        central.finVuelta();
+    end Loop;
+end sede;    
+
 ```
 #  parcial práctico del 13-12-22
 
@@ -534,7 +572,7 @@ de datos de la sucursal que la llama.
 que debe ser usado por *E estudiantes de acuerdo con el orden de llegada*. Cuando el estudiante accede al horno, lo usa y luego se 
 retira para dejar al siguiente. Nota: cada Estudiante una sólo una vez el horno.
 #### AGREGO YO EL QUE TODOS LOS PROCEDIMIENTOS DEBEN TERMINAR
-```SH                           PASSING tHE BATTON CON COORDINADOR
+```SH                         passing the baton
 procedure estudiante[id:1..E]{
     coord!solicitarUso(id);
     coord?usar()
@@ -575,7 +613,56 @@ Un proceso Escritor podrá acceder si no hay ningún otro proceso  usando la bas
 proceso Lector podrá acceder si no hay procesos Escritores usando la base de datos; al acceder lee y sale de la BD. Siempre se le 
 debe dar prioridad al pedido de acceso para escribir sobre el pedido de acceso para leer. 
 ```SH
+procedure ej13 is
+task type escritor
+task type lector
+task bd is
+    entry accesoLector();
+    entry accesoEscritor();
+    entry finEscritor();
+    entry finLector();
+end bd;
+lectores ; array(1..E) of lector
+escritores ; array(1..E) of escritor
 
+task body escritor is
+    loop
+        select 
+            bd.accesoEscritor
+            escribirBD();
+            bd.finEscritor();
+        else
+            delay 60;
+    ebd loop
+end escritor
+task body Lector is
+    loop
+        select 
+            bd.accesoLector();
+            leerBD();
+            finLector();
+        or  delay 120;
+            delay 300;
+    ebd loop
+end escritor
+task body bd is
+    integer lector=0;
+    loop        
+        select
+            when (lectores==0 ) ACCEPT accesoEscritor();
+            ACCEPT finEscritor();
+        OR  
+            when (accesoEscritor`count ==0) ; ACCEPT accesoLector();
+                lector ++;
+        OR
+            ACCEPT finLector();
+                lector --;
+        end select;
+    end loop;
+end bd;
+begin
+    null
+end ej13;
 ```
  
 # primer recuperatorio del parcial práctico
@@ -590,8 +677,42 @@ A continuación, espera a que alguno de *los supervisores lo corrija y le indiqu
 - Los supervisores corrigen las entregas respetando el orden en que los competidores van entregando.
  Nota: maximizar la concurrencia y no generar demora innecesaria.
 ```SH
-```
+process competidor [id: 1..N]{
+    organizador!pedirDesafio(id);
+    organizador?recibirDesafio(desafio);
+    examen= resolver(desafio);
+    corrdinador.corregir(examen,id);
+    supervisor[*]?correccion(cumple);
+    while (!cumple){
+        examen= resolver(desafio);
+        corrdinador.corregir(examen,id);
+        supervisor[*]?correccion(cumple);
+    }
+}
+process supervisor[id:1..S]{
+    while(true){
+        coordinador!libre(id);
+        coordinador?siguiente(idA,examen);
+        cumple= corregir(examen);
+        competidor[idA]!correccion(cumple);
+    }
+}
+process organizador{
+    for(i=1;i<=N;i++){
+        competidor[*]?pedirDesafio(idC);
+        competidor[idC]!recibirDesafio(New desafio());
+    }
+}
+process coordinador {
+    cola cola;
+    do
+        () competidor[*]?corregir(examen, id) -> cola.push(id,examen);
+        () !cola.empty(); supervisor[*]?libre(idS)-> supervisor[idS]!siguiente(cola.pop());
+    od
+}
 
+```
+////////////////////////////////
 ### ADA
 15. Resolver con ADA el siguiente problema. Una empresa de venta de calzado cuenta con *S sedes*. En la *oficina central* 
 de la empresa se utiliza un sistema que permite controlar el stock de los diferentes modelos, ya que 
@@ -709,23 +830,134 @@ Respuesta:
 ```
 
 ### ADA
-22. En una playa hay 5 equipos de 4 personas cada uno (en total son 20 personas donde cada una conoce previamente a que equipo pertenece). Cuando las
-personas van llegando esperan con los de su equipo hasta que el mismo esté completo (hayan llegado los 4 integrantes), a partir de ese momento el equipo
+22. En una *playa* hay *5 equipos* de *4 personas* cada uno (en total son 20 personas donde cada una conoce previamente a que equipo pertenece). [Cuando las
+personas van llegando esperan con los de su equipo hasta que el mismo esté completo (hayan llegado los 4 integrantes)], [a partir de ese momento el equipo
 comienza a jugar. El juego consiste en que cada integrante del grupo junta 15 monedas de a una en una playa (las monedas pueden ser de 1, 2 o 5 pesos) y
-se suman los montos de las 60 monedas conseguidas en el grupo. Al finalizar cada persona debe conocer el grupo que más dinero junto. Nota: maximizar
+se suman los montos de las 60 monedas conseguidas en el grupo.] [Al finalizar cada persona debe conocer el grupo que más dinero junto]. Nota: maximizar
 la concurrencia. Suponga que para simular la búsqueda de una moneda por parte de una persona existe una función Moneda() que retorna el valor de la
 moneda encontrada. Respuesta
 ```SH
+procedure EJ22 is
+task playa is
+    ENTRY finEquipo(total:in integer; idE: in integer);
+    ENTRY ganador(idM:out integer);
+end playa;
+task type equipo is
+    ENTRY llegoBarrera();
+    ENTRY finBarrera();
+    Entry sumarMonedaE(cant:in integer);
+    Entry identificar(idE:in integer);
+task type Persona;
+personas: array (1..20) of persona;
+equipos: array(1..5) of equipo;
+
+task body persona is
+    eq, cant, idGanador:integer;
+begin
+    eq=X;
+    cant=0;
+    Equipo[eq].llegoBarrera();
+    Equipo[eq].finBarrera();
+    for i in (1..15) LOOP
+        cant= cant+ Moneda();
+    end loop;
+    Equipo[eq].sumarMonedaE(cant);
+    playa.Ganador(idGanador);
+end persona;
+
+Task body Equipo is
+    id, totalE:integer
+begin
+    totalE=0;
+    ACCEPT identificar(idE:in integer) do 
+        id=idE;
+    end identificar;
+    for i in (1..4) loop
+        ACCEPT llegobarrera()
+    end loop;
+    for i in (1..4) loop
+        ACCEPT finbarrera()
+    end loop;
+    for i in (1..4) loop
+        ACCEPT sumarMonedaE(cant: in integer)do
+            total=total+cant;
+        end sumarMonedaE;
+    end loop;
+    Playa.finEquipo(total,id);
+end Equipo;
+task body playa is
+    idMax,cantMax:integer
+begin
+    cantMax=-1; idMax=-1;
+    for i in (1..5) loop
+        ACCEPT finEquipo(total:IN integer, idE:inEquipo) do
+            if (total>cantMax){
+                idMax=idE;
+                cantMax=total;
+            }
+        end finEquipo;
+    end loop;
+    for i in (1..20) loop
+        ACCEPT ganador(idG: OUT integer)do
+            idG=idMax;
+        end ganador;
+    end loop;
+end playa;
+
+begin
+
+end ej22;
 
 ```
 
 ### ADA
-23. En un sistema para acreditar carreras universitarias, hay UN Servidor que atiende pedidos de U Usuarios de a uno a la vez y de acuerdo con el orden en
+23. En un sistema para acreditar carreras universitarias, hay *UN Servidor* que atiende pedidos de *U Usuarios* de a uno a la vez y de acuerdo con el orden en
 que se hacen los pedidos. Cada usuario trabaja en el documento a presentar, y luego lo envía al servidor; espera la respuesta de este que le indica si está
 todo bien o hay algún error. Mientras haya algún error,vuelve a trabajar con el documento y a enviarlo al servidor. Cuando el servidor le responde que
 está todo bien, el usuario se retira. Cuando un usuario envía un pedido espera a lo sumo 2 minutos a que sea recibido por el servidor, pasado ese tiempo
 espera un minuto y vuelve a intentarlo (usando el mismo documento). Respuesta:
 ```SH
+procedure universidad is
+
+task type usuario is
+
+task servidor is
+    ENTRY pedido(trabajo: in txt, cumple:out boolean );
+end servidor
+usuarios: arrayt(1..U)of usuario;
+
+task body usuario is
+
+begin
+    trabajo=hacerTrabajo();
+    cumple=false;
+    select
+        servidor.pedido(trabajo, cumple);
+    or  delay 120.0;
+            delay 60.0;
+    end select;
+    while(!cumple)
+        trabajo=hacerTrabajo();
+        select
+            servidor.pedido(trabajo, cumple);
+        or  delay 120.0;
+                delay 60.0;
+        end select;
+    end while;
+end usuario;
+
+task body servidor is
+    loop
+        ACCEPT pedido(trabajo: in txt, cumple:out boolean ) do
+            cumple= verificar(trabajo);
+        end pedido;
+    end loop
+end servidor;
+
+begin 
+
+end universidad
+
 ```
 
 ### ADA
@@ -769,30 +1001,156 @@ atención. Existen N clientes que hacen alguna de estas dos solicitudes: compra 
 dando prioridad a las solicitudes de compra. Nota: suponga que cada cliente llama a la función TipoSolicitud() que le devuelve el tipo de solicitud a
 realizar. Maximizar la concurrencia. Respuesta:
 ```SH
+chan comprar(int);
+chan devolucion(int);
+chan respuesta[N](txt);
+chan hayCliente();
+chan servidorLibre(int)
+chan atender(int)
+
+process cliente[id:1..N]{
+    opcion= tipoSolicitud();
+    if (opcion == "comprar"){
+        send comprar(id);
+    }else{
+        send devolucion(id);
+    }
+    send hayCliente();
+    receive restuesta[id](comprobante);
+}
+process servidor[id:1..3]{
+    send servidorLibre(id);
+    receive atender(idC);
+    comprobante= atender(idC);
+    send respuesta[idC](comprobante);
+}
+
+process coordinador{
+    while(true){
+        receive servidorLibre(idS);
+        receive hayCliente();
+        if(not empty(comprar)){
+            receive comprar(idC);
+        }else{
+
+            receive devolucion(idC);
+        }
+        send atender(idC);
+    }
+}
+
 ```
 
 ### ADA
-28. Resolver con ADA el siguiente problema. Se debe simular un juego en el que participan 30 jugadores que forman 5 grupos de 6 personas. Al llegar cada
+28. Resolver con ADA el siguiente problema. Se debe simular un juego en el que participan *30 jugadores* que forman *5 grupos* de 6 personas. Al llegar cada
 jugador debe buscar las instrucciones y el grupo al que pertenece en un cofre de cemento privado para cada uno; para esto deben usar un único martillo
 gigante de a uno a la vez y de acuerdo al orden de llegada. Luego se debe juntar con el resto de los integrantes de su grupo y los 6 juntos realizan
-las acciones que indican sus instrucciones. Cuando un grupo termina su juego le avisa a un Coordinador que le indica en qué orden término el grupo.
-Nota: maximizar la concurrencia; suponer que existe una función Jugar() que simula que los 6 integrantes de un grupo están jugando juntos; suponga que
-existe una función Romper(grupo) que simula cuando un jugador está rompiendo su cofre con el martillo y le retorna el grupo al que pertenece. Respuesta
+las acciones que indican sus instrucciones. Cuando un grupo termina su juego le avisa a un *Coordinador* que le indica en qué orden término el grupo.
+Nota 1: maximizar la concurrencia; suponer que existe una función Jugar() que simula que los 6 integrantes de un grupo están jugando juntos;
+    el programa debe finalizar,, y cada untegrante del equipo debe saber en que posicion termino;
+NOTA 2: suponga que existe una función Romper(grupo) que simula cuando un jugador está rompiendo su cofre con el martillo y le retorna el grupo al que pertenece. Respuesta
 ```SH
+procedure Juego is
+task type jugador;
+task type grupo is
+    ENTRY llegadaBarrera()
+    ENTRY finBarrera()
+end grupo
+task admin is
+    ENTRY finEquipo(pos: in integer);
+end admin;
+jugadores : array (1..30) of jugador;
+equipos : array (1..5) of equipo;
+
+task body jugador is
+
+begin
+    admin.solicitarMartillo();
+    romper(grupo);
+    admin.liberar();
+    equipo[grupo].llegueBarrera();
+    equipo[grupo].quieroPOS(pos);
+end jugador;
+
+task body equipo is
+
+begin 
+    for i in 1..6 loop
+        ACCEPT llegoBarrera();
+    end loop
+    jugar();
+    admin.finEquipo(pos);
+    for i in 1..6 loop
+        ACCEPT quieroPOS(posi:out integer) do
+            posi=pos;
+        end quieroPOS
+    end LOOP;
+end equipo;  
+
+task body admin is
+ integer pos=1;
+begin
+    for i in 1..65 loop
+        select
+            when(libre); ACCEPT solicitarMartillo();
+                libre=false;
+        OR      
+            ACCEPT liberar();
+                libre=true;
+        OR 
+            ACCEPT finEquipo(posicion:out integer)do
+                posicion=pos;
+                pos++;
+            end finEquipo;
+    end loop;
+end admin;
+
+begin
+    null;
+end juego;
 ```
 
 ### PMS
-29. Resolver con PMS (Pasaje de Mensajes SINCRÓNICOS) el siguiente problema. Hay un teléfono público que debe ser usado por U usuarios de acuerdo al
-orden de llegada (se debe usar con exclusión mutua). El usuario debe esperar su turno, usa el teléfono y luego lo deja para que el siguiente lo use. Nota:
+1.  Resolver con PMS (Pasaje de Mensajes SINCRÓNICOS) el siguiente problema. Hay *un teléfono público* que debe ser usado por *U usuarios* de acuerdo al
+*orden de llegada* (se debe usar con exclusión mutua). El usuario debe esperar su turno, usa el teléfono y luego lo deja para que el siguiente lo use. Nota:
 cada usuario usa sólo una vez el teléfono. Respuesta:
-```CPP
+```sh
+process usuario[id: 1..U]{
+    buffer!solicitarUso(id);
+    buffer?acceder(id);
+    UsarTelefono();
+    buffer!salir();
+}
+
+process buffer{
+    boolean ocupado=false;
+    int cont=0;
+    do
+        () cont<U; usuario[*]?soliciarUso(idU)-> 
+            IF(ocupado){
+                cola.push(idU);
+            }else{
+                ocupado=true;
+                usuario[idU]!acceder();
+            }
+        () cont<U; usuario[*]?liberar() -> 
+            cont++;
+            IF(!cola.empty()){
+                usuario[cola.pop()]!acceder();
+            }else{
+                ocupado=false;
+            }
+    od
+}
+
+
 ```
 
 ### PMS
 30. Resolver con PMS el siguiente problema: Se debe administrar el acceso para usar un determinado *Servidor* donde no se permite más de *10 usuarios* trabajando al mismo tiempo, por cuestiones de rendimiento.
  Existen N usuarios que solicitan acceder al Servidor, esperan hasta que se les de acceso para trabajar en él y luego salen del mismo. Nota: suponga que existe una función *TrabajarEnServidor()* que llaman los usuarios para representar que están trabajando en el Servidor.
 
-```CPP                              //PASSING THE CONDITION!
+```CPP                            
 process usuarios[id:1..10]{
     while(true){
         admin!solicitarUso(id);
@@ -822,4 +1180,5 @@ process admin[]{
     od
 }
 ```
+# ADA
 31. Resolver con ADA el siguiente problema. Para un experimento se tiene una red con 150 controladores de temperatura y un módulo central. Cada controlador toma la temperatura cada 30 segundos y si está fuera de rango realiza lo siguiente: si está por encima del rango espera a que la central que le indique qué acción realizar; si está por debajo del rango espera a lo sumo 10 minutos a que la central le indique qué acción realizar; en cualquiera de los dos casos, realiza la acción indicada por la central (si fue atendido). La central atiende los pedidos de los controladores dando prioridad a aquellos que son por superar el rango permitido. Nota: suponga que existen las funciones medir() que retorna la temperatura al controlador; actualizar() que simula que el controlador está haciendo la acción indicada por la central; determinar() que es usado por la central para determinar qué acción debe hacer el controlador en base a la información que le envió; el experimento nunca finaliza.
